@@ -45,9 +45,12 @@ func parseconfig(filename string) (conf *Config, err error) {
 }
 
 // Log text
-func logmsg(time time.Time, nick string, channel string, text string) {
+func logmsg(time time.Time, nick string, target string, text string) {
 	line := time.UTC().Format("2006-01-02 15:04:05")
-	line += channel + " <" + nick + "> " + text + "\n"
+	if target != "" {
+		line += " " + target
+	}
+	line += " <" + nick + "> " + text + "\n"
 
 	if file != nil {
 		_, err := file.WriteString(line)
@@ -114,6 +117,8 @@ func ui() {
 		fmt.Printf("[%v] ", target)
 		bio := bufio.NewReader(os.Stdin)
 		line, err := bio.ReadString('\n')
+		logmsg(time.Now(), conn.Me().Name, target, line)
+		
 		if err != nil {
 			log.Fatal("Couldn't get input.\n")
 		}
