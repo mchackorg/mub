@@ -162,7 +162,7 @@ func ui() {
 			log.Fatal("Couldn't get input.\n")
 		}
 
-		if line != "\n" {
+		if line != "\n" && line != "\r\n" {
 			if line[0] == '/' {
 				// A command
 				parsecommand(line)
@@ -195,7 +195,7 @@ func main() {
 	cfg.SSL = conf.TLS
 	cfg.Server = conf.Server
 	cfg.NewNick = func(n string) string { return n + "^" }
-	cfg.Me.Ident = "elsabot"
+	cfg.Me.Ident = "mub"
 	cfg.Me.Name = conf.RealName
 	conn = irc.Client(cfg)
 
