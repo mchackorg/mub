@@ -50,6 +50,7 @@ func logmsg(time time.Time, nick string, target string, text string) {
 	if target != "" {
 		line += " " + target
 	}
+	text = strings.TrimRight(text, "\r\n")
 	line += " <" + nick + "> " + text + "\n"
 
 	if file != nil {
