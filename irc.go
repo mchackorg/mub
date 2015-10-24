@@ -130,7 +130,8 @@ func parsecommand(line string) {
 		conn.Part(fields[1])
 		target = ""
 	case "/names":
-		conn.Raw("NAMES")
+		namescmd := fmt.Sprintf("NAMES %v", target)
+		conn.Raw(namescmd)
 	case "/whois":
 		if len(fields) != 2 {
 			fmt.Printf("Use /whois <nick>\n")
