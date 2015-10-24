@@ -91,7 +91,6 @@ func handler(msgtype int, line *irc.Line) {
 	case IRC_names:
 		fmt.Printf("Members: %v\n", line.Args[3])
 	case IRC_whois:
-		fmt.Printf("args: %v\n", line.Args)
 		fmt.Printf("%v <%v@%v>\n", line.Args[5], line.Args[2], line.Args[3])
 	case IRC_quit:
 		fmt.Printf("%v %v quit IRC.\n", time, line.Nick)
