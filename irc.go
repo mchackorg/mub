@@ -128,7 +128,7 @@ func ui() {
 		fmt.Printf("[%v] ", target)
 		bio := bufio.NewReader(os.Stdin)
 		line, err := bio.ReadString('\n')
-		logmsg(time.Now(), conn.Me().Name, target, line)
+		logmsg(time.Now(), conn.Me().Nick, target, line)
 
 		if err != nil {
 			log.Fatal("Couldn't get input.\n")
