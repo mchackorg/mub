@@ -73,6 +73,16 @@ func handlemsg(line *irc.Line) {
 	logmsg(line.Time, line.Nick, line.Target(), line.Text())
 }
 
+func handlejoin(line *irc.Line) {
+	time := line.Time.Format("15:04:05")
+	fmt.Printf("%v %v joined %v\n", time, line.Nick, line.Target())
+}
+
+func handlepart(line *irc.Line) {
+	time := line.Time.Format("15:04:05")
+	fmt.Printf("%v %v left %v\n", time, line.Nick, line.Target())
+}
+
 func connected(conn *irc.Conn, line *irc.Line) {
 	fmt.Printf("Connected.\n")
 }
@@ -119,7 +129,7 @@ func ui() {
 		bio := bufio.NewReader(os.Stdin)
 		line, err := bio.ReadString('\n')
 		logmsg(time.Now(), conn.Me().Name, target, line)
-		
+
 		if err != nil {
 			log.Fatal("Couldn't get input.\n")
 		}
@@ -180,6 +190,16 @@ func main() {
 	// Handle messages.
 	conn.HandleFunc("PRIVMSG",
 		func(conn *irc.Conn, line *irc.Line) { handlemsg(line) })
+
+	conn.HandleFunc("join",
+		func(conn *irc.Conn, line *irc.Line) {
+			handlejoin(line)
+		})
+
+	conn.HandleFunc("part",
+		func(conn *irc.Conn, line *irc.Line) {
+			handlepart(line)
+		})
 
 	go ui()
 
