@@ -108,6 +108,28 @@ func parsecommand(line string) {
 	}
 }
 
+func ui() {
+	quitclient = false
+	for !quitclient {
+		fmt.Printf("[%v] ", target)
+		bio := bufio.NewReader(os.Stdin)
+		line, err := bio.ReadString('\n')
+		if err != nil {
+			log.Fatal("Couldn't get input.\n")
+		}
+
+		if line != "\n" {
+			if line[0] == '/' {
+				// A command
+				parsecommand(line)
+			} else {
+				// Send line to target.
+				conn.Privmsg(target, line)
+			}
+		}
+	}
+}
+
 func main() {
 	var err error
 	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
@@ -153,25 +175,7 @@ func main() {
 	conn.HandleFunc("PRIVMSG",
 		func(conn *irc.Conn, line *irc.Line) { handlemsg(line) })
 
-	quitclient = false
-	for !quitclient {
-		fmt.Printf("[%v] ", target)
-		bio := bufio.NewReader(os.Stdin)
-		line, err := bio.ReadString('\n')
-		if err != nil {
-			log.Fatal("Couldn't get input.\n")
-		}
-
-		if line != "\n" {
-			if line[0] == '/' {
-				// A command
-				parsecommand(line)
-			} else {
-				// Send line to target.
-				conn.Privmsg(target, line)
-			}
-		}
-	}
+	go ui()
 
 	// Wait for disconnect
 	<-quit
