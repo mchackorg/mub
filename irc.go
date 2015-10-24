@@ -83,6 +83,11 @@ func handlepart(line *irc.Line) {
 	fmt.Printf("%v %v left %v\n", time, line.Nick, line.Target())
 }
 
+func handlequit(line *irc.Line) {
+	time := line.Time.Format("15:04:05")
+	fmt.Printf("%v %v quit IRC.\n", time, line.Nick)
+}
+
 func connected(conn *irc.Conn, line *irc.Line) {
 	fmt.Printf("Connected.\n")
 }
@@ -199,6 +204,11 @@ func main() {
 	conn.HandleFunc("part",
 		func(conn *irc.Conn, line *irc.Line) {
 			handlepart(line)
+		})
+
+	conn.HandleFunc("quit",
+		func(conn *irc.Conn, line *irc.Line) {
+			handlequit(line)
 		})
 
 	go ui()
