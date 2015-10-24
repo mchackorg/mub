@@ -19,6 +19,7 @@ type Config struct {
 	RealName string
 	Server   string
 	LogFile  string
+	TLS      bool
 }
 
 var (
@@ -122,7 +123,7 @@ func parsecommand(line string) {
 		conn.Part(fields[1])
 		target = ""
 	case "/quit":
-		fmt.Printf("Qutting.\n")
+		fmt.Printf("Quitting.\n")
 		if len(fields) == 2 {
 			conn.Quit(fields[1])
 		} else {
@@ -132,7 +133,7 @@ func parsecommand(line string) {
 	}
 }
 
-func ui() {
+func ui(quit chan bool) {
 	quitclient = false
 	for !quitclient {
 		fmt.Printf("[%v] ", target)
@@ -151,6 +152,14 @@ func ui() {
 			} else {
 				// Send line to target.
 				conn.Privmsg(target, line)
+			}
+		}
+
+		if !quitclient {
+			select {
+			case <-quit:
+				fmt.Printf("Server disconnected.\n")
+				quitclient = true
 			}
 		}
 	}
@@ -174,7 +183,7 @@ func main() {
 	}
 
 	cfg := irc.NewConfig(conf.Nick)
-	cfg.SSL = false
+	cfg.SSL = conf.TLS
 	cfg.Server = conf.Server
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "elsabot"
@@ -197,8 +206,7 @@ func main() {
 		fmt.Printf("Connection error: %s\n", err)
 	}
 
-	// Handle messages.
-	conn.HandleFunc("PRIVMSG",
+	conn.HandleFunc("privmsg",
 		func(conn *irc.Conn, line *irc.Line) {
 			handler(IRC_privmsg, line)
 		})
@@ -218,9 +226,5 @@ func main() {
 			handler(IRC_quit, line)
 		})
 
-	go ui()
-
-	// Wait for disconnect
-	<-quit
-	fmt.Printf("Disconnected from server.\n")
+	ui(quit)
 }
