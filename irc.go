@@ -34,6 +34,7 @@ const (
 	IRC_join
 	IRC_part
 	IRC_quit
+	IRC_names
 )
 
 // Parse the configuration file. Returns the configuration.
@@ -86,6 +87,8 @@ func handler(msgtype int, line *irc.Line) {
 		fmt.Printf("%v %v joined %v\n", time, line.Nick, line.Target())
 	case IRC_part:
 		fmt.Printf("%v %v left %v\n", time, line.Nick, line.Target())
+	case IRC_names:
+		fmt.Printf("Members: %v\n", line.Args[3])
 	case IRC_quit:
 		fmt.Printf("%v %v quit IRC.\n", time, line.Nick)
 	default:
@@ -122,6 +125,8 @@ func parsecommand(line string) {
 		fmt.Printf("Leaving channel %v\n", fields[1])
 		conn.Part(fields[1])
 		target = ""
+	case "/names":
+		conn.Raw("NAMES")
 	case "/quit":
 		fmt.Printf("Quitting.\n")
 		if len(fields) == 2 {
@@ -215,6 +220,11 @@ func main() {
 	conn.HandleFunc("quit",
 		func(conn *irc.Conn, line *irc.Line) {
 			handler(IRC_quit, line)
+		})
+
+	conn.HandleFunc("353",
+		func(conn *irc.Conn, line *irc.Line) {
+			handler(IRC_names, line)
 		})
 
 	ui()
