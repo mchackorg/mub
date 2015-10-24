@@ -35,6 +35,7 @@ const (
 	IRC_part
 	IRC_quit
 	IRC_names
+	IRC_whois
 )
 
 // Parse the configuration file. Returns the configuration.
@@ -89,6 +90,9 @@ func handler(msgtype int, line *irc.Line) {
 		fmt.Printf("%v %v left %v\n", time, line.Nick, line.Target())
 	case IRC_names:
 		fmt.Printf("Members: %v\n", line.Args[3])
+	case IRC_whois:
+		fmt.Printf("args: %v\n", line.Args)
+		fmt.Printf("%v <%v@%v>\n", line.Args[5], line.Args[2], line.Args[3])
 	case IRC_quit:
 		fmt.Printf("%v %v quit IRC.\n", time, line.Nick)
 	default:
@@ -127,6 +131,14 @@ func parsecommand(line string) {
 		target = ""
 	case "/names":
 		conn.Raw("NAMES")
+	case "/whois":
+		if len(fields) != 2 {
+			fmt.Printf("Use /whois <nick>\n")
+			return
+		}
+
+		conn.Whois(fields[1])
+
 	case "/quit":
 		fmt.Printf("Quitting.\n")
 		if len(fields) == 2 {
@@ -225,6 +237,11 @@ func main() {
 	conn.HandleFunc("353",
 		func(conn *irc.Conn, line *irc.Line) {
 			handler(IRC_names, line)
+		})
+
+	conn.HandleFunc("311",
+		func(conn *irc.Conn, line *irc.Line) {
+			handler(IRC_whois, line)
 		})
 
 	ui()
