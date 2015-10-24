@@ -117,7 +117,9 @@ func main() {
 		fmt.Printf("[%v] ", channel)
 		bio := bufio.NewReader(os.Stdin)
 		line, _, _ := bio.ReadLine()
-		c.Privmsg(channel, string(line))
+		if string(line) != "" {
+			c.Privmsg(channel, string(line))
+		}
 	}
 
 	// Wait for disconnect
