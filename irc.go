@@ -6,12 +6,38 @@ import "bufio"
 import "fmt"
 import "time"
 import "os"
-import "os/exec"
+import "gopkg.in/yaml.v2"
+import "io/ioutil"
+import "flag"
+import "log"
 
 import irc "github.com/fluffle/goirc/client"
 
 // Our log file.
 var file *os.File
+
+type Config struct {
+	Nick     string
+	RealName string
+	Server   string
+	Port     int
+}
+
+// Parse the configuration file. Returns the configuration.
+func parseconfig(filename string) (conf *Config, err error) {
+	contents, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return
+	}
+
+	conf = new(Config)
+
+	if err = yaml.Unmarshal(contents, &conf); err != nil {
+		return
+	}
+
+	return
+}
 
 // Log text
 func logmsg(time time.Time, nick string, text string) {
@@ -24,76 +50,9 @@ func logmsg(time time.Time, nick string, text string) {
 	}
 }
 
-// Parse a numer from text. Returns number.
-func parsenumber(text string) (lines int) {
-	n, err := fmt.Sscanf(text, "%d", &lines)
-	if err != nil {
-		panic(err)
-	}
-
-	if n != 1 {
-		lines = 0
-	}
-
-	return lines
-}
-
-// Wait for command cmd to exit so we can remove all its resources.
-func wait(cmd *exec.Cmd) {
-	cmd.Wait()
-}
-
-// Send the last lines to requester.
-func printlast(conn *irc.Conn, lines int, nick string) {
-	if lines <= 0 {
-		return
-	}
-
-	linesarg := fmt.Sprintf("%v", lines)
-	cmd := exec.Command("tail", "-n", linesarg, "./botlog.txt")
-
-	output, err := cmd.StdoutPipe()
-	if err != nil {
-		panic(err)
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		panic(err)
-	}
-
-	go wait(cmd)
-
-	scanner := bufio.NewScanner(output)
-	for scanner.Scan() {
-		conn.Privmsg(nick, scanner.Text())
-	}
-}
-
 // PRIVMSG handler.
 func handlemsg(channel string, conn *irc.Conn, line *irc.Line) {
-	switch line.Text() {
-	case "!last":
-		printlast(conn, 10, line.Nick)
-		return
-	case "!version":
-		conn.Privmsg(line.Target(), "0.1")
-		return
-	case "!help":
-		conn.Privmsg(line.Target(), "!version, !help, !last [N], where N is number of lines.")
-		return
-	}
-
-	if line.Text()[:5] == "!last" {
-		lines := parsenumber(line.Text()[6:])
-		// Don't give more than 200 lines backlog.
-		if lines > 200 {
-			lines = 200
-			conn.Privmsg(line.Nick, "I can't give you more than the last 200 lines:")
-		}
-		printlast(conn, lines, line.Nick)
-		return
-	}
+	fmt.Printf("%v <%v> %v\n", line.Time, line.Nick, line.Text())
 
 	// Only log if this was said to the channel.
 	if line.Target() == channel {
@@ -109,21 +68,29 @@ func joinchannel(channel string, conn *irc.Conn, line *irc.Line) {
 
 func main() {
 	var err error
+	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
 
-	channel := "#hacklunch"
-	filename := "botlog.txt"
+	flag.Parse()
+
+	conf, err := parseconfig(*configfile)
+	if err != nil {
+		log.Fatal("Couldn't parse configuration file")
+	}
+
+	channel := "#larshack"
+	filename := "irclog.txt"
 
 	file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		panic(err)
 	}
 
-	cfg := irc.NewConfig("elsa")
-	cfg.SSL = true
-	cfg.Server = "chat.hack.org:4713"
+	cfg := irc.NewConfig(conf.Nick)
+	cfg.SSL = false
+	cfg.Server = conf.Server
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "elsabot"
-	cfg.Me.Name = "Elsa"
+	cfg.Me.Name = conf.RealName
 	c := irc.Client(cfg)
 
 	// Join channel on connect.
@@ -140,8 +107,15 @@ func main() {
 	}
 
 	// Handle messages.
-	c.HandleFunc("PRIVMSG",
+	go c.HandleFunc("PRIVMSG",
 		func(conn *irc.Conn, line *irc.Line) { handlemsg(channel, conn, line) })
+
+	for {
+		fmt.Printf("[%v] ", channel)
+		bio := bufio.NewReader(os.Stdin)
+		line, _, _ := bio.ReadLine()
+		c.Privmsg(channel, string(line))
+	}
 
 	// Wait for disconnect
 	<-quit
