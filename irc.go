@@ -52,7 +52,8 @@ func logmsg(time time.Time, nick string, text string) {
 
 // PRIVMSG handler.
 func handlemsg(channel string, conn *irc.Conn, line *irc.Line) {
-	fmt.Printf("%v <%v> %v\n", line.Time, line.Nick, line.Text())
+	time := line.Time.Format("15:04:05")
+	fmt.Printf("%v <%v> %v\n", time, line.Nick, line.Text())
 
 	// Only log if this was said to the channel.
 	if line.Target() == channel {
@@ -63,7 +64,6 @@ func handlemsg(channel string, conn *irc.Conn, line *irc.Line) {
 // Join a channel and do something.
 func joinchannel(channel string, conn *irc.Conn, line *irc.Line) {
 	conn.Join(channel)
-	conn.Privmsg(channel, "Slå dig lös, slå dig fri!")
 }
 
 func main() {
