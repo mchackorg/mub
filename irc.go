@@ -28,6 +28,13 @@ var (
 	quitclient bool
 )
 
+const (
+	IRC_privmsg = iota
+	IRC_join
+	IRC_part
+	IRC_quit
+)
+
 // Parse the configuration file. Returns the configuration.
 func parseconfig(filename string) (conf *Config, err error) {
 	contents, err := ioutil.ReadFile(filename)
@@ -61,31 +68,29 @@ func logmsg(time time.Time, nick string, target string, text string) {
 	}
 }
 
-// PRIVMSG handler.
-func handlemsg(line *irc.Line) {
+func handler(msgtype int, line *irc.Line) {
 	time := line.Time.Format("15:04:05")
-	if line.Target() != target {
-		fmt.Printf("%v %v <%v> %v\n", time, line.Target(), line.Nick, line.Text())
-	} else {
-		fmt.Printf("%v <%v> %v\n", time, line.Nick, line.Text())
+
+	switch msgtype {
+	case IRC_privmsg:
+		if line.Target() != target {
+			fmt.Printf("%v %v <%v> %v\n", time, line.Target(), line.Nick, line.Text())
+		} else {
+			fmt.Printf("%v <%v> %v\n", time, line.Nick, line.Text())
+		}
+
+		logmsg(line.Time, line.Nick, line.Target(), line.Text())
+
+	case IRC_join:
+		fmt.Printf("%v %v joined %v\n", time, line.Nick, line.Target())
+	case IRC_part:
+		fmt.Printf("%v %v left %v\n", time, line.Nick, line.Target())
+	case IRC_quit:
+		fmt.Printf("%v %v quit IRC.\n", time, line.Nick)
+	default:
+		fmt.Printf("Unknown message to handler.\n")
 	}
 
-	logmsg(line.Time, line.Nick, line.Target(), line.Text())
-}
-
-func handlejoin(line *irc.Line) {
-	time := line.Time.Format("15:04:05")
-	fmt.Printf("%v %v joined %v\n", time, line.Nick, line.Target())
-}
-
-func handlepart(line *irc.Line) {
-	time := line.Time.Format("15:04:05")
-	fmt.Printf("%v %v left %v\n", time, line.Nick, line.Target())
-}
-
-func handlequit(line *irc.Line) {
-	time := line.Time.Format("15:04:05")
-	fmt.Printf("%v %v quit IRC.\n", time, line.Nick)
 }
 
 func connected(conn *irc.Conn, line *irc.Line) {
@@ -194,21 +199,23 @@ func main() {
 
 	// Handle messages.
 	conn.HandleFunc("PRIVMSG",
-		func(conn *irc.Conn, line *irc.Line) { handlemsg(line) })
+		func(conn *irc.Conn, line *irc.Line) {
+			handler(IRC_privmsg, line)
+		})
 
 	conn.HandleFunc("join",
 		func(conn *irc.Conn, line *irc.Line) {
-			handlejoin(line)
+			handler(IRC_join, line)
 		})
 
 	conn.HandleFunc("part",
 		func(conn *irc.Conn, line *irc.Line) {
-			handlepart(line)
+			handler(IRC_part, line)
 		})
 
 	conn.HandleFunc("quit",
 		func(conn *irc.Conn, line *irc.Line) {
-			handlequit(line)
+			handler(IRC_quit, line)
 		})
 
 	go ui()
