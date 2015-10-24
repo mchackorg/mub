@@ -45,9 +45,9 @@ func parseconfig(filename string) (conf *Config, err error) {
 }
 
 // Log text
-func logmsg(time time.Time, nick string, text string) {
+func logmsg(time time.Time, nick string, channel string, text string) {
 	line := time.UTC().Format("2006-01-02 15:04:05")
-	line += " <" + nick + "> " + text + "\n"
+	line += channel + " <" + nick + "> " + text + "\n"
 
 	if file != nil {
 		_, err := file.WriteString(line)
@@ -66,7 +66,7 @@ func handlemsg(line *irc.Line) {
 		fmt.Printf("%v <%v> %v\n", time, line.Nick, line.Text())
 	}
 
-	logmsg(line.Time, line.Nick, line.Text())
+	logmsg(line.Time, line.Nick, line.Target(), line.Text())
 }
 
 func connected(conn *irc.Conn, line *irc.Line) {
