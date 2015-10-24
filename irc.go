@@ -17,7 +17,6 @@ type Config struct {
 	Nick     string
 	RealName string
 	Server   string
-	Port     int
 	LogFile  string
 }
 
