@@ -48,9 +48,11 @@ func logmsg(time time.Time, nick string, text string) {
 	line := time.UTC().Format("2006-01-02 15:04:05")
 	line += " <" + nick + "> " + text + "\n"
 
-	_, err := file.WriteString(line)
-	if err != nil {
-		fmt.Println(err)
+	if file != nil {
+		_, err := file.WriteString(line)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
@@ -96,7 +98,8 @@ func main() {
 
 	file, err = os.OpenFile(conf.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Could not open file '%s', will not write to log\n", conf.LogFile)
+		fmt.Printf("Error Message: %s\n", err)
 	}
 
 	cfg := irc.NewConfig(conf.Nick)
