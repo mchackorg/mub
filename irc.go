@@ -22,9 +22,10 @@ type Config struct {
 }
 
 var (
-	file   *os.File
-	conn   *irc.Conn
-	target string
+	file       *os.File
+	conn       *irc.Conn
+	target     string
+	quitclient bool
 )
 
 // Parse the configuration file. Returns the configuration.
@@ -79,9 +80,31 @@ func parsecommand(line string) {
 	case "/nick":
 		conn.Nick(fields[1])
 	case "/join":
+		if len(fields) != 2 {
+			fmt.Printf("Use /join #channel\n")
+			return
+		}
+
 		target = fields[1]
 		fmt.Printf("Now talking on %v\n", target)
 		conn.Join(target)
+	case "/part":
+		if len(fields) != 2 {
+			fmt.Printf("Use /part #channel\n")
+			return
+		}
+
+		fmt.Printf("Leaving channel %v\n", fields[1])
+		conn.Part(fields[1])
+		target = ""
+	case "/quit":
+		fmt.Printf("Qutting.\n")
+		if len(fields) == 2 {
+			conn.Quit(fields[1])
+		} else {
+			conn.Quit()
+		}
+		quitclient = true
 	}
 }
 
@@ -130,7 +153,8 @@ func main() {
 	conn.HandleFunc("PRIVMSG",
 		func(conn *irc.Conn, line *irc.Line) { handlemsg(line) })
 
-	for {
+	quitclient = false
+	for !quitclient {
 		fmt.Printf("[%v] ", target)
 		bio := bufio.NewReader(os.Stdin)
 		line, err := bio.ReadString('\n')
