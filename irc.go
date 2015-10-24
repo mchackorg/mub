@@ -1,5 +1,5 @@
-// Elsa is a simple IRC bot who logs everything that's said on a
-// channel and sends a backlog when asked.
+// Small cross-platform IRC client.
+
 package main
 
 import "bufio"
@@ -13,15 +13,15 @@ import "log"
 
 import irc "github.com/fluffle/goirc/client"
 
-// Our log file.
-var file *os.File
-
 type Config struct {
 	Nick     string
 	RealName string
 	Server   string
 	Port     int
+	LogFile  string
 }
+
+var file *os.File
 
 // Parse the configuration file. Returns the configuration.
 func parseconfig(filename string) (conf *Config, err error) {
@@ -61,9 +61,10 @@ func handlemsg(channel string, conn *irc.Conn, line *irc.Line) {
 	}
 }
 
-// Join a channel and do something.
-func joinchannel(channel string, conn *irc.Conn, line *irc.Line) {
-	conn.Join(channel)
+func connected(conn *irc.Conn, line *irc.Line) {
+	fmt.Printf("Connected.\n")
+	fmt.Printf("Joining #larshack\n")
+	conn.Join("#larshack")
 }
 
 func main() {
@@ -78,9 +79,8 @@ func main() {
 	}
 
 	channel := "#larshack"
-	filename := "irclog.txt"
 
-	file, err = os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+	file, err = os.OpenFile(conf.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -95,19 +95,22 @@ func main() {
 
 	// Join channel on connect.
 	c.HandleFunc("connected",
-		func(conn *irc.Conn, line *irc.Line) { joinchannel(channel, conn, line) })
+		func(conn *irc.Conn, line *irc.Line) {
+			connected(conn, line)
+		})
 	// And a signal on disconnect
 	quit := make(chan bool)
 	c.HandleFunc("disconnected",
 		func(conn *irc.Conn, line *irc.Line) { quit <- true })
 
 	// Tell client to connect.
+	fmt.Printf("Connecting to %v...\n", conf.Server)
 	if err := c.Connect(); err != nil {
 		fmt.Printf("Connection error: %s\n", err)
 	}
 
 	// Handle messages.
-	go c.HandleFunc("PRIVMSG",
+	c.HandleFunc("PRIVMSG",
 		func(conn *irc.Conn, line *irc.Line) { handlemsg(channel, conn, line) })
 
 	for {
@@ -119,4 +122,5 @@ func main() {
 
 	// Wait for disconnect
 	<-quit
+	fmt.Printf("Disconnected from server.\n")
 }
