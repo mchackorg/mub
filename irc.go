@@ -133,7 +133,7 @@ func parsecommand(line string) {
 	}
 }
 
-func ui(quit chan bool) {
+func ui() {
 	quitclient = false
 	for !quitclient {
 		fmt.Printf("[%v] ", target)
@@ -152,14 +152,6 @@ func ui(quit chan bool) {
 			} else {
 				// Send line to target.
 				conn.Privmsg(target, line)
-			}
-		}
-
-		if !quitclient {
-			select {
-			case <-quit:
-				fmt.Printf("Server disconnected.\n")
-				quitclient = true
 			}
 		}
 	}
@@ -195,10 +187,9 @@ func main() {
 		func(conn *irc.Conn, line *irc.Line) {
 			connected(conn, line)
 		})
-	// And a signal on disconnect
-	quit := make(chan bool)
+
 	conn.HandleFunc("disconnected",
-		func(conn *irc.Conn, line *irc.Line) { quit <- true })
+		func(conn *irc.Conn, line *irc.Line) { quitclient = true })
 
 	// Tell client to connect.
 	fmt.Printf("Connecting to %v...\n", conf.Server)
@@ -226,5 +217,7 @@ func main() {
 			handler(IRC_quit, line)
 		})
 
-	ui(quit)
+	ui()
+
+	fmt.Printf("Disconnected from server.\n")
 }
