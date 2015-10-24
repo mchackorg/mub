@@ -10,6 +10,7 @@ import "gopkg.in/yaml.v2"
 import "io/ioutil"
 import "flag"
 import "log"
+import "strings"
 
 import irc "github.com/fluffle/goirc/client"
 
@@ -20,7 +21,11 @@ type Config struct {
 	LogFile  string
 }
 
-var file *os.File
+var (
+	file   *os.File
+	conn   *irc.Conn
+	target string
+)
 
 // Parse the configuration file. Returns the configuration.
 func parseconfig(filename string) (conf *Config, err error) {
@@ -50,20 +55,32 @@ func logmsg(time time.Time, nick string, text string) {
 }
 
 // PRIVMSG handler.
-func handlemsg(channel string, conn *irc.Conn, line *irc.Line) {
+func handlemsg(line *irc.Line) {
 	time := line.Time.Format("15:04:05")
-	fmt.Printf("%v <%v> %v\n", time, line.Nick, line.Text())
-
-	// Only log if this was said to the channel.
-	if line.Target() == channel {
-		logmsg(line.Time, line.Nick, line.Text())
+	if line.Target() != target {
+		fmt.Printf("%v %v <%v> %v\n", time, line.Target(), line.Nick, line.Text())
+	} else {
+		fmt.Printf("%v <%v> %v\n", time, line.Nick, line.Text())
 	}
+
+	logmsg(line.Time, line.Nick, line.Text())
 }
 
 func connected(conn *irc.Conn, line *irc.Line) {
 	fmt.Printf("Connected.\n")
-	fmt.Printf("Joining #larshack\n")
-	conn.Join("#larshack")
+}
+
+func parsecommand(line string) {
+	fields := strings.Fields(line)
+
+	switch fields[0] {
+	case "/nick":
+		conn.Nick(fields[1])
+	case "/join":
+		target = fields[1]
+		fmt.Printf("Now talking on %v\n", target)
+		conn.Join(target)
+	}
 }
 
 func main() {
@@ -77,8 +94,6 @@ func main() {
 		log.Fatal("Couldn't parse configuration file")
 	}
 
-	channel := "#larshack"
-
 	file, err = os.OpenFile(conf.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		panic(err)
@@ -90,34 +105,44 @@ func main() {
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "elsabot"
 	cfg.Me.Name = conf.RealName
-	c := irc.Client(cfg)
+	conn = irc.Client(cfg)
 
 	// Join channel on connect.
-	c.HandleFunc("connected",
+	conn.HandleFunc("connected",
 		func(conn *irc.Conn, line *irc.Line) {
 			connected(conn, line)
 		})
 	// And a signal on disconnect
 	quit := make(chan bool)
-	c.HandleFunc("disconnected",
+	conn.HandleFunc("disconnected",
 		func(conn *irc.Conn, line *irc.Line) { quit <- true })
 
 	// Tell client to connect.
 	fmt.Printf("Connecting to %v...\n", conf.Server)
-	if err := c.Connect(); err != nil {
+	if err := conn.Connect(); err != nil {
 		fmt.Printf("Connection error: %s\n", err)
 	}
 
 	// Handle messages.
-	c.HandleFunc("PRIVMSG",
-		func(conn *irc.Conn, line *irc.Line) { handlemsg(channel, conn, line) })
+	conn.HandleFunc("PRIVMSG",
+		func(conn *irc.Conn, line *irc.Line) { handlemsg(line) })
 
 	for {
-		fmt.Printf("[%v] ", channel)
+		fmt.Printf("[%v] ", target)
 		bio := bufio.NewReader(os.Stdin)
-		line, _, _ := bio.ReadLine()
-		if string(line) != "" {
-			c.Privmsg(channel, string(line))
+		line, err := bio.ReadString('\n')
+		if err != nil {
+			log.Fatal("Couldn't get input.\n")
+		}
+
+		if line != "\n" {
+			if line[0] == '/' {
+				// A command
+				parsecommand(line)
+			} else {
+				// Send line to target.
+				conn.Privmsg(target, line)
+			}
 		}
 	}
 
