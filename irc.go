@@ -62,10 +62,6 @@ func logmsg(time time.Time, nick string, target string, text string) {
 	}
 }
 
-func connected(conn *irc.Conn, line *irc.Line) {
-	fmt.Printf("Connected.\n")
-}
-
 func parsecommand(line string) {
 	fields := strings.Fields(line)
 
@@ -86,7 +82,6 @@ func parsecommand(line string) {
 			return
 		}
 
-		fmt.Printf("Leaving channel %v\n", fields[1])
 		conn.Part(fields[1])
 		currtarget = ""
 	case "/names":
@@ -152,8 +147,7 @@ func main() {
 
 	file, err = os.OpenFile(conf.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
-		fmt.Printf("Could not open file '%s', will not write to log\n", conf.LogFile)
-		fmt.Printf("Error Message: %s\n", err)
+		cantopenfile(conf.LogFile, err)
 	}
 
 	cfg := irc.NewConfig(conf.Nick)
@@ -169,16 +163,18 @@ func main() {
 	// Join channel on connect.
 	conn.HandleFunc("connected",
 		func(conn *irc.Conn, line *irc.Line) {
-			connected(conn, line)
+			connected(line.Time)
 		})
 
 	conn.HandleFunc("disconnected",
 		func(conn *irc.Conn, line *irc.Line) { quitclient = true })
 
 	// Tell client to connect.
-	fmt.Printf("Connecting to %v...\n", conf.Server)
+	connecting(conf.Server)
+
 	if err := conn.Connect(); err != nil {
-		fmt.Printf("Connection error: %s\n", err)
+		connectionerror(err)
+		os.Exit(-1)
 	}
 
 	conn.HandleFunc("privmsg",
@@ -214,5 +210,5 @@ func main() {
 
 	ui(*sub)
 
-	fmt.Printf("Disconnected from server.\n")
+	disconnected()
 }
