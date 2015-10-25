@@ -128,7 +128,11 @@ func ui(sub bool) {
 				parsecommand(line)
 			} else {
 				// Send line to target.
-				conn.Privmsg(currtarget, line)
+				if currtarget == "" {
+					notarget()
+				} else {
+					conn.Privmsg(currtarget, line)
+				}
 			}
 		}
 	}

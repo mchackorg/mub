@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+func notarget() {
+	fmt.Printf("Join a channel first.\n")
+}
+
 func connecting(server string) {
 	fmt.Printf("Connecting to %v...\n", server)
 }
