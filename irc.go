@@ -25,17 +25,8 @@ type Config struct {
 var (
 	file       *os.File
 	conn       *irc.Conn
-	target     string
+	currtarget string
 	quitclient bool
-)
-
-const (
-	IRC_privmsg = iota
-	IRC_join
-	IRC_part
-	IRC_quit
-	IRC_names
-	IRC_whois
 )
 
 // Parse the configuration file. Returns the configuration.
@@ -71,35 +62,6 @@ func logmsg(time time.Time, nick string, target string, text string) {
 	}
 }
 
-func handler(msgtype int, line *irc.Line) {
-	time := line.Time.Format("15:04:05")
-
-	switch msgtype {
-	case IRC_privmsg:
-		if line.Target() != target {
-			fmt.Printf("%v %v <%v> %v\n", time, line.Target(), line.Nick, line.Text())
-		} else {
-			fmt.Printf("%v <%v> %v\n", time, line.Nick, line.Text())
-		}
-
-		logmsg(line.Time, line.Nick, line.Target(), line.Text())
-
-	case IRC_join:
-		fmt.Printf("%v %v joined %v\n", time, line.Nick, line.Target())
-	case IRC_part:
-		fmt.Printf("%v %v left %v\n", time, line.Nick, line.Target())
-	case IRC_names:
-		fmt.Printf("Members: %v\n", line.Args[3])
-	case IRC_whois:
-		fmt.Printf("%v <%v@%v>\n", line.Args[5], line.Args[2], line.Args[3])
-	case IRC_quit:
-		fmt.Printf("%v %v quit IRC.\n", time, line.Nick)
-	default:
-		fmt.Printf("Unknown message to handler.\n")
-	}
-
-}
-
 func connected(conn *irc.Conn, line *irc.Line) {
 	fmt.Printf("Connected.\n")
 }
@@ -112,35 +74,34 @@ func parsecommand(line string) {
 		conn.Nick(fields[1])
 	case "/join":
 		if len(fields) != 2 {
-			fmt.Printf("Use /join #channel\n")
+			commanderror("Use /join #channel\n")
 			return
 		}
 
-		target = fields[1]
-		fmt.Printf("Now talking on %v\n", target)
-		conn.Join(target)
+		currtarget = fields[1]
+		conn.Join(currtarget)
 	case "/part":
 		if len(fields) != 2 {
-			fmt.Printf("Use /part #channel\n")
+			commanderror("Use /part #channel\n")
 			return
 		}
 
 		fmt.Printf("Leaving channel %v\n", fields[1])
 		conn.Part(fields[1])
-		target = ""
+		currtarget = ""
 	case "/names":
-		namescmd := fmt.Sprintf("NAMES %v", target)
+		namescmd := fmt.Sprintf("NAMES %v", currtarget)
 		conn.Raw(namescmd)
 	case "/whois":
 		if len(fields) != 2 {
-			fmt.Printf("Use /whois <nick>\n")
+			commanderror("Use /whois <nick>\n")
 			return
 		}
 
 		conn.Whois(fields[1])
 
 	case "/quit":
-		fmt.Printf("Quitting.\n")
+		iquit()
 		if len(fields) == 2 {
 			conn.Quit(fields[1])
 		} else {
@@ -150,13 +111,16 @@ func parsecommand(line string) {
 	}
 }
 
-func ui() {
+func ui(sub bool) {
 	quitclient = false
 	for !quitclient {
-		fmt.Printf("[%v] ", target)
+		if !sub {
+			fmt.Printf("[%v] ", currtarget)
+		}
+
 		bio := bufio.NewReader(os.Stdin)
 		line, err := bio.ReadString('\n')
-		logmsg(time.Now(), conn.Me().Nick, target, line)
+		logmsg(time.Now(), conn.Me().Nick, currtarget, line)
 
 		if err != nil {
 			log.Fatal("Couldn't get input.\n")
@@ -168,7 +132,7 @@ func ui() {
 				parsecommand(line)
 			} else {
 				// Send line to target.
-				conn.Privmsg(target, line)
+				conn.Privmsg(currtarget, line)
 			}
 		}
 	}
@@ -177,6 +141,7 @@ func ui() {
 func main() {
 	var err error
 	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
+	var sub = flag.Bool("sub", false, "Run as subprocess.")
 
 	flag.Parse()
 
@@ -193,6 +158,8 @@ func main() {
 
 	cfg := irc.NewConfig(conf.Nick)
 	cfg.SSL = conf.TLS
+	// tls.Config
+	//cfg.SSLConfig.InsecureSkipVerify = true
 	cfg.Server = conf.Server
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "mub"
@@ -216,35 +183,36 @@ func main() {
 
 	conn.HandleFunc("privmsg",
 		func(conn *irc.Conn, line *irc.Line) {
-			handler(IRC_privmsg, line)
+			msg(line.Time, line.Nick, line.Target(), line.Text())
+			logmsg(line.Time, line.Nick, line.Target(), line.Text())
 		})
 
 	conn.HandleFunc("join",
 		func(conn *irc.Conn, line *irc.Line) {
-			handler(IRC_join, line)
+			joined(line.Time, line.Nick, line.Target())
 		})
 
 	conn.HandleFunc("part",
 		func(conn *irc.Conn, line *irc.Line) {
-			handler(IRC_part, line)
+			parted(line.Time, line.Nick, line.Target())
 		})
 
 	conn.HandleFunc("quit",
 		func(conn *irc.Conn, line *irc.Line) {
-			handler(IRC_quit, line)
+			quit(line.Time, line.Nick)
 		})
 
 	conn.HandleFunc("353",
 		func(conn *irc.Conn, line *irc.Line) {
-			handler(IRC_names, line)
+			members(line.Time, line.Args[3])
 		})
 
 	conn.HandleFunc("311",
 		func(conn *irc.Conn, line *irc.Line) {
-			handler(IRC_whois, line)
+			whois(line.Time, line.Args[5], line.Args[2], line.Args[3])
 		})
 
-	ui()
+	ui(*sub)
 
 	fmt.Printf("Disconnected from server.\n")
 }
