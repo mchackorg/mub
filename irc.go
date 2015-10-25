@@ -20,6 +20,7 @@ type Config struct {
 	Server   string
 	LogFile  string
 	TLS      bool
+	Sub      bool
 }
 
 var (
@@ -136,7 +137,6 @@ func ui(sub bool) {
 func main() {
 	var err error
 	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
-	var sub = flag.Bool("sub", false, "Run as subprocess.")
 
 	flag.Parse()
 
@@ -208,7 +208,7 @@ func main() {
 			whois(line.Time, line.Args[5], line.Args[2], line.Args[3])
 		})
 
-	ui(*sub)
+	ui(conf.Sub)
 
 	disconnected()
 }
