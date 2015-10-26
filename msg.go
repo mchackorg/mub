@@ -30,11 +30,7 @@ func connected(time time.Time) {
 func msg(time time.Time, nick string, target string, text string) {
 	timestr := time.Format("15:04:05")
 
-	if target != currtarget {
-		fmt.Printf("%v %v <%v> %v\n", timestr, target, nick, text)
-	} else {
-		fmt.Printf("%v <%v> %v\n", timestr, nick, text)
-	}
+	fmt.Printf("%v <%v→%v> %v\n", timestr, nick, target, text)
 }
 
 func commanderror(help string) {
@@ -70,7 +66,7 @@ func cantopenfile(filename string, err error) {
 	fmt.Printf("Error Message: %s\n", err)
 }
 
-func members(time time.Time, members string) {
+func members(time time.Time, channel string, members string) {
 	timestr := time.Format("15:04:05")
-	fmt.Printf("%v Members: %v\n", timestr, members)
+	fmt.Printf("%v Members on %v: %v\n", timestr, channel, members)
 }

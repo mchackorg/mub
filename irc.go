@@ -208,7 +208,7 @@ func main() {
 
 	conn.HandleFunc("353",
 		func(conn *irc.Conn, line *irc.Line) {
-			members(line.Time, line.Args[3])
+			members(line.Time, line.Args[2], line.Args[3])
 		})
 
 	conn.HandleFunc("311",
