@@ -11,6 +11,7 @@ import "io/ioutil"
 import "flag"
 import "log"
 import "strings"
+import "crypto/tls"
 
 import irc "github.com/fluffle/goirc/client"
 
@@ -142,6 +143,8 @@ func main() {
 	var err error
 	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
 
+	var tlsconfig tls.Config
+
 	flag.Parse()
 
 	conf, err := parseconfig(*configfile)
@@ -156,8 +159,9 @@ func main() {
 
 	cfg := irc.NewConfig(conf.Nick)
 	cfg.SSL = conf.TLS
-	// tls.Config
-	//cfg.SSLConfig.InsecureSkipVerify = true
+	tlsconfig.InsecureSkipVerify = true
+	tlsconfig.MinVersion = tls.VersionTLS10
+	cfg.SSLConfig = &tlsconfig
 	cfg.Server = conf.Server
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "mub"
