@@ -93,7 +93,16 @@ func main() {
 	cfg.Me.Name = conf.RealName
 	conn = irc.Client(cfg)
 
-	// Join channel on connect.
+	conn.HandleFunc("nick",
+		func(conn *irc.Conn, line *irc.Line) {
+			nick(line.Nick, line.Args[0])
+		})
+
+	conn.HandleFunc("notice",
+		func(conn *irc.Conn, line *irc.Line) {
+			notice(line.Nick, line.Args[1])
+		})
+
 	conn.HandleFunc("connected",
 		func(conn *irc.Conn, line *irc.Line) {
 			connected(conn.Me().Nick)
@@ -101,14 +110,6 @@ func main() {
 
 	conn.HandleFunc("disconnected",
 		func(conn *irc.Conn, line *irc.Line) { quitclient = true })
-
-	// Tell client to connect.
-	connecting(conf.Server)
-
-	if err := conn.Connect(); err != nil {
-		connectionerror(err)
-		os.Exit(-1)
-	}
 
 	conn.HandleFunc("privmsg",
 		func(conn *irc.Conn, line *irc.Line) {
@@ -140,6 +141,13 @@ func main() {
 		func(conn *irc.Conn, line *irc.Line) {
 			whois(line.Args[1], line.Args[5], line.Args[2], line.Args[3])
 		})
+
+	connecting(conf.Server)
+
+	if err := conn.Connect(); err != nil {
+		connectionerror(err)
+		os.Exit(-1)
+	}
 
 	ui(conf.Sub)
 
