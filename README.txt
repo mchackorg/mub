@@ -8,7 +8,7 @@ To connect to a server, use
 
   /connect server:port nick
 
-TLS will be used if turned on in the configuration file.
+or /tlsconnect.
 
 The server clause in the configuration file limits what servers are
 allowed to connect to.
