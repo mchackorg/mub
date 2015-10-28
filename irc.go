@@ -96,7 +96,7 @@ func main() {
 	// Join channel on connect.
 	conn.HandleFunc("connected",
 		func(conn *irc.Conn, line *irc.Line) {
-			connected(line.Time)
+			connected(conn.Me().Nick)
 		})
 
 	conn.HandleFunc("disconnected",
@@ -118,17 +118,17 @@ func main() {
 
 	conn.HandleFunc("join",
 		func(conn *irc.Conn, line *irc.Line) {
-			joined(line.Time, line.Nick, line.Target())
+			joined(line.Nick, line.Target())
 		})
 
 	conn.HandleFunc("part",
 		func(conn *irc.Conn, line *irc.Line) {
-			parted(line.Time, line.Nick, line.Target())
+			parted(line.Nick, line.Target())
 		})
 
 	conn.HandleFunc("quit",
 		func(conn *irc.Conn, line *irc.Line) {
-			quit(line.Time, line.Nick)
+			quit(line.Nick)
 		})
 
 	conn.HandleFunc("353",
@@ -138,7 +138,7 @@ func main() {
 
 	conn.HandleFunc("311",
 		func(conn *irc.Conn, line *irc.Line) {
-			whois(line.Time, line.Args[5], line.Args[2], line.Args[3])
+			whois(line.Args[1], line.Args[5], line.Args[2], line.Args[3])
 		})
 
 	ui(conf.Sub)

@@ -7,58 +7,69 @@ import (
 )
 
 func notarget() {
-	fmt.Printf("Join a channel first.\n")
+	warn("Join a channel first.")
+}
+
+func noconnection() {
+	warn("Not connected to a server.")
 }
 
 func connecting(server string) {
-	fmt.Printf("Connecting to %v...\n", server)
+	info("Connecting to " + server + "...")
+}
+
+func nick(oldnick string, newnick string) {
+	info(oldnick + " is now known as " + newnick)
 }
 
 func connectionerror(err error) {
-	fmt.Printf("Connection error: %s\n", err)
+	line := fmt.Sprintf("Connection error: %v", err)
+	errormsg(line)
 }
 
 func disconnected() {
-	fmt.Printf("Disconnected from server.\n")
+	warn("Disconnected from server.")
 }
 
-func connected(time time.Time) {
-	timestr := time.Format("15:04:05")
-	fmt.Printf("%v Connected.\n", timestr)
+func connected(nick string) {
+	info("Connected as " + nick)
 }
 
 func msg(time time.Time, nick string, target string, text string) {
-	timestr := time.Format("15:04:05")
-
-	fmt.Printf("%v <%v→%v> %v\n", timestr, nick, target, text)
+	showmsg(nick, target, text)
 }
 
 func commanderror(help string) {
-	fmt.Printf(help)
+	warn(help)
 }
 
 func iquit() {
-	fmt.Printf("Quitting.\n")
+	info("Quitting.")
 }
 
-func quit(time time.Time, nick string) {
-	timestr := time.Format("15:04:05")
-	fmt.Printf("%v %v quit IRC.\n", timestr, nick)
+func quit(nick string) {
+	line := fmt.Sprintf("%v quit IRC.", nick)
+	info(line)
 }
 
-func whois(time time.Time, realname string, ident string, host string) {
-	timestr := time.Format("15:04:05")
-	fmt.Printf("%v %v <%v@%v>\n", timestr, realname, ident, host)
+func notice(nick string, msg string) {
+	line := fmt.Sprintf("NOTICE: %v %v", nick, msg)
+	info(line)
 }
 
-func joined(time time.Time, nick string, channel string) {
-	timestr := time.Format("15:04:05")
-	fmt.Printf("%v %v joined %v\n", timestr, nick, channel)
+func whois(nick string, realname string, ident string, host string) {
+	line := fmt.Sprintf("%s is %s <%s@%s>", nick, realname, ident, host)
+	info(line)
 }
 
-func parted(time time.Time, nick string, channel string) {
-	timestr := time.Format("15:04:05")
-	fmt.Printf("%v %v parted %v\n", timestr, nick, channel)
+func joined(nick string, channel string) {
+	line := fmt.Sprintf("%s joined %s", nick, channel)
+	info(line)
+}
+
+func parted(nick string, channel string) {
+	line := fmt.Sprintf("%v parted %v", nick, channel)
+	info(line)
 }
 
 func cantopenfile(filename string, err error) {

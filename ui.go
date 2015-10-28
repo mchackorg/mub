@@ -9,6 +9,28 @@ import (
 	"time"
 )
 
+func errormsg(msg string) {
+	message(msg)
+}
+
+func info(msg string) {
+	message(msg)
+}
+
+func warn(msg string) {
+	message(msg)
+}
+
+func showmsg(nick string, target string, text string) {
+	timestr := time.Now().Format("15:04:05")
+	fmt.Printf("%v <%v→%v> %v\n", timestr, nick, target, text)
+}
+
+func message(msg string) {
+	timestr := time.Now().Format("15:04:05")
+	fmt.Printf("%v %s\n", timestr, msg)
+}
+
 func parsecommand(line string) {
 	fields := strings.Fields(line)
 
