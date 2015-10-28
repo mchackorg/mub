@@ -84,7 +84,6 @@ func ui(sub bool) {
 
 		bio := bufio.NewReader(os.Stdin)
 		line, err := bio.ReadString('\n')
-		logmsg(time.Now(), conn.Me().Nick, currtarget, line)
 
 		if err != nil {
 			log.Fatal("Couldn't get input.\n")
@@ -100,6 +99,7 @@ func ui(sub bool) {
 					notarget()
 				} else {
 					conn.Privmsg(currtarget, line)
+					logmsg(time.Now(), conn.Me().Nick, currtarget, line)
 				}
 			}
 		}
