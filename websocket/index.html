@@ -3,6 +3,9 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <style>
+body {
+  background: black;
+}
 .srvline {
 	display:block;
 	color: red;
@@ -30,22 +33,31 @@ document.onreadystatechange = function() {
       }
     };
 
-    document.getElementById("sendBtn").addEventListener("click", function () {
-      var data = document.getElementById("chat").value;
+    function send() {
+      var chatbox = document.getElementById("chatbox");
+      var data = chatbox.value;
       ws.send(data);
         var spanText = document.createElement('span');
         spanText.innerHTML = "[" + "CLIENT" + "] " + data;
         spanText.className = 'cliline';
         document.getElementById("log").appendChild(spanText);
+        chatbox.value = "";
+    }
+
+    document.getElementById("sendBtn").addEventListener("click", send);
+    document.getElementById("chatbox").addEventListener("keypress", function(e) {
+        if(e.keyCode === 13) {
+            send();
+        }
+        return false;
     });
   }
 };
 
-
 </script>
 </head>
 <body>
-	<input id="chat" type="text" />
+	<input id="chatbox" type="text"/>
 	<input type="button" id="sendBtn" value="send"></input>
 	<div id="log"></div>
 </body>
