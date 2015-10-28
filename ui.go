@@ -35,12 +35,19 @@ func parsecommand(line string) {
 	fields := strings.Fields(line)
 
 	switch fields[0] {
+	case "/tlsconnect":
+		if len(fields) != 3 {
+			warn("Use /connect server:port nick")
+			return
+		}
+		connect(fields[1], fields[2], true)
+
 	case "/connect":
 		if len(fields) != 3 {
 			warn("Use /connect server:port nick")
 			return
 		}
-		connect(fields[1], fields[2])
+		connect(fields[1], fields[2], false)
 
 	case "/nick":
 		if conn == nil {
@@ -130,13 +137,9 @@ func parsecommand(line string) {
 	}
 }
 
-func ui(sub bool) {
+func ui() {
 	quitclient = false
 	for !quitclient {
-		if !sub {
-			fmt.Printf("[%v] ", currtarget)
-		}
-
 		bio := bufio.NewReader(os.Stdin)
 		line, err := bio.ReadString('\n')
 

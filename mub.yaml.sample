@@ -1,8 +1,3 @@
 ---
-nick: test
-realname: "Test Testson"
-server: 192.168.0.228:6667
-logfile: irclog.txt
-tls: false
-# Are we running as a subprocess to another UI?
-sub: false
+#server: 192.168.0.228
+#logfile: irclog.txt

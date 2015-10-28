@@ -16,12 +16,9 @@ import (
 )
 
 type Config struct {
-	Nick     string
-	RealName string
-	Server   string
-	LogFile  string
-	TLS      bool
-	Sub      bool
+	Server  string
+	LogFile string
+	TLS     bool
 }
 
 var (
@@ -65,7 +62,7 @@ func logmsg(time time.Time, nick string, target string, text string) {
 	}
 }
 
-func connect(server string, nickname string) bool {
+func connect(server string, nickname string, usetls bool) bool {
 	var tlsconfig tls.Config
 
 	// Check if we're allowed to connect to this host.
@@ -75,13 +72,13 @@ func connect(server string, nickname string) bool {
 	}
 
 	cfg := irc.NewConfig(nickname)
-	cfg.SSL = true
+	cfg.SSL = usetls
 	tlsconfig.InsecureSkipVerify = true
 	cfg.SSLConfig = &tlsconfig
 	cfg.Server = server
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "mub"
-	cfg.Me.Name = ""
+	cfg.Me.Name = "" // Real Name.
 
 	conn = irc.Client(cfg)
 
@@ -160,7 +157,7 @@ func main() {
 		cantopenfile(conf.LogFile, err)
 	}
 
-	ui(conf.Sub)
+	ui()
 
 	disconnected()
 }
