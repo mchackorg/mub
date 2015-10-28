@@ -66,7 +66,7 @@ func connect(server string, nickname string, usetls bool) bool {
 	var tlsconfig tls.Config
 
 	// Check if we're allowed to connect to this host.
-	if conf.Server != "" && server != conf.Server {
+	if conf != nil && conf.Server != "" && server != conf.Server {
 		errormsg("Not allowed to connect to " + server)
 		return false
 	}
@@ -152,9 +152,11 @@ func main() {
 		log.Fatal("Couldn't parse configuration file")
 	}
 
-	file, err = os.OpenFile(conf.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
-	if err != nil {
-		cantopenfile(conf.LogFile, err)
+	if conf != nil && conf.LogFile != "" {
+		file, err = os.OpenFile(conf.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+		if err != nil {
+			cantopenfile(conf.LogFile, err)
+		}
 	}
 
 	ui()
