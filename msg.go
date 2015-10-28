@@ -39,10 +39,6 @@ func msg(time time.Time, nick string, target string, text string) {
 	showmsg(nick, target, text)
 }
 
-func commanderror(help string) {
-	warn(help)
-}
-
 func iquit() {
 	info("Quitting.")
 }
@@ -77,7 +73,7 @@ func cantopenfile(filename string, err error) {
 	fmt.Printf("Error Message: %s\n", err)
 }
 
-func members(time time.Time, channel string, members string) {
-	timestr := time.Format("15:04:05")
-	fmt.Printf("%v Members on %v: %v\n", timestr, channel, members)
+func members(channel string, members string) {
+	line := fmt.Sprintf("Members on %v: %v", channel, members)
+	info(line)
 }

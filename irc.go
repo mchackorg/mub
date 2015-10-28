@@ -26,6 +26,7 @@ type Config struct {
 
 var (
 	file       *os.File
+	conf       *Config
 	conn       *irc.Conn
 	currtarget string
 	quitclient bool
@@ -64,44 +65,25 @@ func logmsg(time time.Time, nick string, target string, text string) {
 	}
 }
 
-func main() {
-	var err error
-	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
-
+func connect(server string, nickname string) bool {
 	var tlsconfig tls.Config
 
-	flag.Parse()
-
-	conf, err := parseconfig(*configfile)
-	if err != nil {
-		log.Fatal("Couldn't parse configuration file")
+	// Check if we're allowed to connect to this host.
+	if conf.Server != "" && server != conf.Server {
+		errormsg("Not allowed to connect to " + server)
+		return false
 	}
 
-	file, err = os.OpenFile(conf.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
-	if err != nil {
-		cantopenfile(conf.LogFile, err)
-	}
-
-	cfg := irc.NewConfig(conf.Nick)
-	cfg.SSL = conf.TLS
+	cfg := irc.NewConfig(nickname)
+	cfg.SSL = true
 	tlsconfig.InsecureSkipVerify = true
-	tlsconfig.MinVersion = tls.VersionTLS10
 	cfg.SSLConfig = &tlsconfig
-	cfg.Server = conf.Server
+	cfg.Server = server
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "mub"
-	cfg.Me.Name = conf.RealName
+	cfg.Me.Name = ""
+
 	conn = irc.Client(cfg)
-
-	conn.HandleFunc("nick",
-		func(conn *irc.Conn, line *irc.Line) {
-			nick(line.Nick, line.Args[0])
-		})
-
-	conn.HandleFunc("notice",
-		func(conn *irc.Conn, line *irc.Line) {
-			notice(line.Nick, line.Args[1])
-		})
 
 	conn.HandleFunc("connected",
 		func(conn *irc.Conn, line *irc.Line) {
@@ -132,9 +114,19 @@ func main() {
 			quit(line.Nick)
 		})
 
+	conn.HandleFunc("nick",
+		func(conn *irc.Conn, line *irc.Line) {
+			nick(line.Nick, line.Args[0])
+		})
+
+	conn.HandleFunc("notice",
+		func(conn *irc.Conn, line *irc.Line) {
+			notice(line.Nick, line.Args[1])
+		})
+
 	conn.HandleFunc("353",
 		func(conn *irc.Conn, line *irc.Line) {
-			members(line.Time, line.Args[2], line.Args[3])
+			members(line.Args[2], line.Args[3])
 		})
 
 	conn.HandleFunc("311",
@@ -142,11 +134,30 @@ func main() {
 			whois(line.Args[1], line.Args[5], line.Args[2], line.Args[3])
 		})
 
-	connecting(conf.Server)
+	connecting(server)
 
 	if err := conn.Connect(); err != nil {
 		connectionerror(err)
-		os.Exit(-1)
+		return false
+	}
+
+	return true
+}
+
+func main() {
+	var err error
+	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
+
+	flag.Parse()
+
+	conf, err = parseconfig(*configfile)
+	if err != nil {
+		log.Fatal("Couldn't parse configuration file")
+	}
+
+	file, err = os.OpenFile(conf.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0644)
+	if err != nil {
+		cantopenfile(conf.LogFile, err)
 	}
 
 	ui(conf.Sub)

@@ -35,43 +35,98 @@ func parsecommand(line string) {
 	fields := strings.Fields(line)
 
 	switch fields[0] {
+	case "/connect":
+		if len(fields) != 3 {
+			warn("Use /connect server:port nick")
+			return
+		}
+		connect(fields[1], fields[2])
+
 	case "/nick":
+		if conn == nil {
+			noconnection()
+			break
+		}
+
 		conn.Nick(fields[1])
+
 	case "/join":
+		if conn == nil {
+			noconnection()
+			break
+		}
+
 		if len(fields) != 2 {
-			commanderror("Use /join #channel\n")
+			warn("Use /join #channel")
 			return
 		}
 
 		currtarget = fields[1]
 		conn.Join(currtarget)
+
 	case "/part":
+		if conn == nil {
+			noconnection()
+			break
+		}
+
 		if len(fields) != 2 {
-			commanderror("Use /part #channel\n")
+			warn("Use /part #channel")
 			return
 		}
 
 		conn.Part(fields[1])
 		currtarget = ""
+
 	case "/names":
+		if conn == nil {
+			noconnection()
+			break
+		}
+
 		namescmd := fmt.Sprintf("NAMES %v", currtarget)
 		conn.Raw(namescmd)
+
 	case "/whois":
+		if conn == nil {
+			noconnection()
+			break
+		}
+
 		if len(fields) != 2 {
-			commanderror("Use /whois <nick>\n")
+			warn("Use /whois <nick>")
 			return
 		}
 
 		conn.Whois(fields[1])
 
+	case "/query":
+		if conn == nil {
+			noconnection()
+			break
+		}
+
+		if len(fields) != 2 {
+			warn("Use /query <nick/channel>")
+			return
+		}
+
+		currtarget = fields[1]
+
 	case "/quit":
 		iquit()
-		if len(fields) == 2 {
-			conn.Quit(fields[1])
-		} else {
-			conn.Quit()
+		if conn != nil {
+			if len(fields) == 2 {
+				conn.Quit(fields[1])
+			} else {
+				conn.Quit()
+			}
 		}
+
 		quitclient = true
+
+	default:
+		warn("Unknown command: " + fields[0])
 	}
 }
 
