@@ -2,17 +2,18 @@
 
 package main
 
-import "fmt"
-import "time"
-import "os"
-import "gopkg.in/yaml.v2"
-import "io/ioutil"
-import "flag"
-import "log"
-import "strings"
-import "crypto/tls"
-
-import irc "github.com/fluffle/goirc/client"
+import (
+	"crypto/tls"
+	"flag"
+	"fmt"
+	irc "github.com/fluffle/goirc/client"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
+	"log"
+	"os"
+	"strings"
+	"time"
+)
 
 type Config struct {
 	Nick     string
