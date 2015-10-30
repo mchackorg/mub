@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -22,6 +23,8 @@ type channel string
 type nickorchan string
 
 type nocommand struct{}
+
+type helpcommand struct{}
 
 type tlsconnectcommand struct {
 	Server string "IRC server"
@@ -55,6 +58,10 @@ type partcommand struct {
 	Channel channel "channel"
 }
 
+type mecommand struct {
+	Action string
+}
+
 type namescommand struct{}
 
 // Internal state of completer.
@@ -75,15 +82,17 @@ var (
 	commands = Commands{
 		Commands: []command{
 			{"", nocommand{}, "No command given."},
+			{"/help", helpcommand{}, "Give this help"},
 			{"/tlsconnect", tlsconnectcommand{}, "Connect to IRC server using TLS."},
 			{"/connect", connectcommand{}, "Connect to IRC server."},
 			{"/quit", quitcommand{}, "Quit the IRC client."},
-			{"/query", querycommand{}, "Query a nick or channel."},
+			{"/query", querycommand{}, "Start talking to a nick or channel."},
 			{"/join", joincommand{}, "Join a channel."},
 			{"/part", partcommand{}, "Leave a channel."},
-			{"/whois", whoiscommand{}, "Join a channel."},
-			{"/nick", nickcommand{}, "Change nick."},
-			{"/names", namescommand{}, "List members on channel."}},
+			{"/whois", whoiscommand{}, "Show information about someone."},
+			{"/me", mecommand{}, "Show a string describing you doing something."},
+			{"/nick", nickcommand{}, "Change your nickname."},
+			{"/names", namescommand{}, "List members on current channel."}},
 	}
 )
 
@@ -206,10 +215,25 @@ func message(msg string) {
 	fmt.Fprintf(output, "%v %s\n", timestr, msg)
 }
 
+func printhelp() {
+	for _, cmd := range commands.Commands {
+		msg := cmd.Name
+		prototype := reflect.TypeOf(cmd.Prototype)
+		for i := 0; i < prototype.NumField(); i++ {
+			msg += " <" + strings.ToLower(prototype.Field(i).Name) + ">"
+		}
+
+		message(msg + " - " + cmd.Desc)
+	}
+}
+
 func parsecommand(line string) {
 	fields := strings.Fields(line)
 
 	switch fields[0] {
+	case "/help":
+		printhelp()
+
 	case "/tlsconnect":
 		if len(fields) != 3 {
 			warn("Use /connect server:port nick")
