@@ -132,6 +132,21 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		//info(msg)
 
 		switch c.Commands[c.State.FoundCmd].Prototype.(type) {
+		case querycommand:
+			msg := fmt.Sprintf("len: %v", len(linestr))
+			info(msg)
+			if len(linestr) < space {
+				return
+			}
+
+			if strings.HasPrefix(linestr[space+1:], "#") {
+				// Complete a channel.
+				newLine = findmap(linestr[space+1:], c.State.Channels, wordpos)
+			} else {
+				// Complete a nickname.
+				newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos)
+			}
+
 		case whoiscommand:
 			newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos)
 		case joincommand:
@@ -283,7 +298,8 @@ func parsecommand(line string) {
 
 		conn.Part(fields[1])
 		currtarget = ""
-
+		// Forget about this channel
+		delete(commands.State.Channels, currtarget)
 	case "/me":
 		if conn == nil {
 			noconnection()
@@ -321,6 +337,8 @@ func parsecommand(line string) {
 
 		conn.Whois(fields[1])
 
+	case "/x":
+		fallthrough
 	case "/query":
 		if conn == nil {
 			noconnection()
