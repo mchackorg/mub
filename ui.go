@@ -60,8 +60,8 @@ type namescommand struct{}
 // Internal state of completer.
 type CommandState struct {
 	FoundCmd int
-	Channels []string
-	AllNicks []string
+	Channels map[string]string
+	NickMap  map[string]string
 }
 
 type Commands struct {
@@ -109,7 +109,7 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 			}
 		} else {
 			// Nick completion.
-			newLine = findmatch(linestr[space+1:], c.State.AllNicks, pos)
+			newLine = findmap(linestr[space+1:], c.State.NickMap, pos)
 		}
 	} else {
 		// Argument completion.
@@ -124,11 +124,11 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 
 		switch c.Commands[c.State.FoundCmd].Prototype.(type) {
 		case whoiscommand:
-			newLine = findmatch(linestr[space+1:], c.State.AllNicks, wordpos)
+			newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos)
 		case joincommand:
-			newLine = findmatch(linestr[space+1:], c.State.Channels, wordpos)
+			newLine = findmap(linestr[space+1:], c.State.Channels, wordpos)
 		case partcommand:
-			newLine = findmatch(linestr[space+1:], c.State.Channels, wordpos)
+			newLine = findmap(linestr[space+1:], c.State.Channels, wordpos)
 		default:
 			info("parsing args for other command")
 		}
@@ -140,6 +140,18 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 }
 
 func findmatch(arg string, args []string, wordpos int) (newLine [][]rune) {
+	for _, n := range args {
+		//msg := fmt.Sprintf("comparing %v to %v", arg, n)
+		//info(msg)
+		if strings.HasPrefix(n, strings.ToLower(arg)) {
+			newLine = append(newLine, []rune(n[wordpos:]))
+		}
+	}
+
+	return
+}
+
+func findmap(arg string, args map[string]string, wordpos int) (newLine [][]rune) {
 	for _, n := range args {
 		//msg := fmt.Sprintf("comparing %v to %v", arg, n)
 		//info(msg)
@@ -233,7 +245,7 @@ func parsecommand(line string) {
 
 		currtarget = fields[1]
 		conn.Join(currtarget)
-		commands.State.Channels = append(commands.State.Channels, currtarget)
+		commands.State.Channels[currtarget] = currtarget
 	case "/part":
 		if conn == nil {
 			noconnection()
@@ -324,6 +336,8 @@ func ui(subprocess bool) {
 
 	// Internal state for command completer.
 	commands.State = &state
+	commands.State.NickMap = make(map[string]string)
+	commands.State.Channels = make(map[string]string)
 
 	if subprocess {
 		// We're running as a subprocess. Just read from stdin.

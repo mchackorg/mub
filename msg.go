@@ -82,6 +82,6 @@ func members(channel string, members string) {
 	fields := strings.Fields(members)
 	for _, field := range fields {
 		field = strings.Trim(field, "@")
-		commands.State.AllNicks = append(commands.State.AllNicks, field)
+		commands.State.NickMap[field] = field
 	}
 }
