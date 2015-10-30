@@ -160,7 +160,7 @@ func main() {
 
 	conf, err = parseconfig(*configfile)
 	if err != nil {
-		warn("Couldn't parse configuration file " + *configfile)
+		fmt.Printf("Couldn't parse configuration file %v\n", *configfile)
 	}
 
 	if conf != nil && conf.LogFile != "" {
