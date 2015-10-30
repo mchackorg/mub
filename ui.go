@@ -87,6 +87,7 @@ var (
 			{"/connect", connectcommand{}, "Connect to IRC server."},
 			{"/quit", quitcommand{}, "Quit the IRC client."},
 			{"/query", querycommand{}, "Start talking to a nick or channel."},
+			{"/x", querycommand{}, "Shorthand for /query."},
 			{"/join", joincommand{}, "Join a channel."},
 			{"/part", partcommand{}, "Leave a channel."},
 			{"/whois", whoiscommand{}, "Show information about someone."},
@@ -133,11 +134,9 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 
 		switch c.Commands[c.State.FoundCmd].Prototype.(type) {
 		case querycommand:
-			msg := fmt.Sprintf("len: %v", len(linestr))
-			info(msg)
-			if len(linestr) < space {
-				return
-			}
+			// if len(linestr) < space {
+			// 	return
+			// }
 
 			if strings.HasPrefix(linestr[space+1:], "#") {
 				// Complete a channel.
@@ -153,8 +152,6 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 			newLine = findmap(linestr[space+1:], c.State.Channels, wordpos)
 		case partcommand:
 			newLine = findmap(linestr[space+1:], c.State.Channels, wordpos)
-		default:
-			info("parsing args for other command")
 		}
 	}
 
