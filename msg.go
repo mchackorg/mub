@@ -62,11 +62,17 @@ func whois(nick string, realname string, ident string, host string) {
 func joined(nick string, channel string) {
 	line := fmt.Sprintf("%s joined %s", nick, channel)
 	info(line)
+
+	// Remember this nick.
+	commands.State.NickMap[nick] = nick
 }
 
 func parted(nick string, channel string) {
 	line := fmt.Sprintf("%v parted %v", nick, channel)
 	info(line)
+
+	// Forget about this nick.
+	delete(commands.State.NickMap, nick)
 }
 
 func cantopenfile(filename string, err error) {
