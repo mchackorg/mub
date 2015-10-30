@@ -21,9 +21,13 @@ func warn(msg string) {
 	message(msg)
 }
 
-func showmsg(nick string, target string, text string) {
+func showmsg(nick string, target string, text string, action bool) {
 	timestr := time.Now().Format("15:04:05")
-	fmt.Printf("%v <%v→%v> %v\n", timestr, nick, target, text)
+	if action {
+		fmt.Printf("%v * %v→%v %v\n", timestr, nick, target, text)
+	} else {
+		fmt.Printf("%v <%v→%v> %v\n", timestr, nick, target, text)
+	}
 }
 
 func message(msg string) {
@@ -84,6 +88,21 @@ func parsecommand(line string) {
 
 		conn.Part(fields[1])
 		currtarget = ""
+
+	case "/me":
+		if conn == nil {
+			noconnection()
+			break
+		}
+
+		if len(fields) < 2 {
+			warn("Use /me action text")
+			return
+		}
+
+		actiontext := line[strings.Index(line, " ")+1:]
+		conn.Action(currtarget, actiontext)
+		logmsg(time.Now(), conn.Me().Nick, currtarget, actiontext, true)
 
 	case "/names":
 		if conn == nil {
@@ -157,7 +176,7 @@ func ui() {
 					notarget()
 				} else {
 					conn.Privmsg(currtarget, line)
-					logmsg(time.Now(), conn.Me().Nick, currtarget, line)
+					logmsg(time.Now(), conn.Me().Nick, currtarget, line, false)
 				}
 			}
 		}

@@ -35,8 +35,8 @@ func connected(nick string) {
 	info("Connected as " + nick)
 }
 
-func msg(time time.Time, nick string, target string, text string) {
-	showmsg(nick, target, text)
+func msg(time time.Time, nick string, target string, text string, action bool) {
+	showmsg(nick, target, text, action)
 }
 
 func iquit() {

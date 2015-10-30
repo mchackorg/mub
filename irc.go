@@ -46,13 +46,17 @@ func parseconfig(filename string) (conf *Config, err error) {
 }
 
 // Log text
-func logmsg(time time.Time, nick string, target string, text string) {
+func logmsg(time time.Time, nick string, target string, text string, action bool) {
 	line := time.UTC().Format("2006-01-02 15:04:05")
 	if target != "" {
 		line += " " + target
 	}
 	text = strings.TrimRight(text, "\r\n")
-	line += " <" + nick + "> " + text + "\n"
+	if action {
+		line += fmt.Sprintf(" * %s %s\n", nick, text)
+	} else {
+		line += fmt.Sprintf(" <%s> %s\n", nick, text)
+	}
 
 	if file != nil {
 		_, err := file.WriteString(line)
@@ -92,8 +96,14 @@ func connect(server string, nickname string, usetls bool) bool {
 
 	conn.HandleFunc("privmsg",
 		func(conn *irc.Conn, line *irc.Line) {
-			msg(line.Time, line.Nick, line.Target(), line.Text())
-			logmsg(line.Time, line.Nick, line.Target(), line.Text())
+			msg(line.Time, line.Nick, line.Target(), line.Text(), false)
+			logmsg(line.Time, line.Nick, line.Target(), line.Text(), false)
+		})
+
+	conn.HandleFunc("action",
+		func(conn *irc.Conn, line *irc.Line) {
+			msg(line.Time, line.Nick, line.Target(), line.Text(), true)
+			logmsg(line.Time, line.Nick, line.Target(), line.Text(), true)
 		})
 
 	conn.HandleFunc("join",

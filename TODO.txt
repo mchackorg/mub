@@ -1,5 +1,3 @@
-- We don't see /me actions.
-- /me command.
 - /msg command.
 - Verifying TLS certificate with fingerprints.
 - Specify commands to run at start.
