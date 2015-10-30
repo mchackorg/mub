@@ -9,7 +9,6 @@ import (
 	irc "github.com/fluffle/goirc/client"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -61,7 +60,8 @@ func logmsg(time time.Time, nick string, target string, text string, action bool
 	if file != nil {
 		_, err := file.WriteString(line)
 		if err != nil {
-			fmt.Println(err)
+			msg := fmt.Sprintf("Couldn't write to log file: %s", err)
+			errormsg(msg)
 		}
 	}
 }
@@ -82,7 +82,7 @@ func connect(server string, nickname string, usetls bool) bool {
 	cfg.Server = server
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "mub"
-	cfg.Me.Name = "" // Real Name.
+	cfg.Me.Name = "Real Name" // Real Name.
 
 	conn = irc.Client(cfg)
 
@@ -154,12 +154,13 @@ func connect(server string, nickname string, usetls bool) bool {
 func main() {
 	var err error
 	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
+	var subprocess = flag.Bool("sub", false, "Run as subprocess without prompt and readline.")
 
 	flag.Parse()
 
 	conf, err = parseconfig(*configfile)
 	if err != nil {
-		log.Fatal("Couldn't parse configuration file")
+		warn("Couldn't parse configuration file " + *configfile)
 	}
 
 	if conf != nil && conf.LogFile != "" {
@@ -169,7 +170,7 @@ func main() {
 		}
 	}
 
-	ui()
+	ui(*subprocess)
 
 	disconnected()
 }

@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -76,4 +77,11 @@ func cantopenfile(filename string, err error) {
 func members(channel string, members string) {
 	line := fmt.Sprintf("Members on %v: %v", channel, members)
 	info(line)
+
+	// Remember these nicks for completion.
+	fields := strings.Fields(members)
+	for _, field := range fields {
+		field = strings.Trim(field, "@")
+		commands.State.AllNicks = append(commands.State.AllNicks, field)
+	}
 }
