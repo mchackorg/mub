@@ -76,8 +76,20 @@ type Commands struct {
 	State    *CommandState
 }
 
+// Constants for output type
+const (
+	O_Stdio int = iota
+	O_Readline
+)
+
+// Type of output and associated writer.
+type Output struct {
+	Type   int // From constants above.
+	Output io.Writer
+}
+
 var (
-	output io.Writer // All output should go here, not to stdout.
+	output Output // All output should go here, not to stdout.
 
 	commands = Commands{
 		Commands: []command{
@@ -163,6 +175,10 @@ func findmatch(arg string, args []string, wordpos int) (newLine [][]rune) {
 	return
 }
 
+// Look for argument with prefix arg in the map args. wordpos is where
+// our cursor is. Just return whatever is after that.
+//
+// Returns an array of completion lines.
 func findmap(arg string, args map[string]string, wordpos int, suffix string) (newLine [][]rune) {
 	for _, n := range args {
 		if strings.HasPrefix(n, strings.ToLower(arg)) {
@@ -185,6 +201,7 @@ func warn(msg string) {
 	message(msg)
 }
 
+// An incoming message or action from another participant.
 func showmsg(nick string, target string, text string, action bool) {
 	var str string
 
@@ -198,6 +215,8 @@ func showmsg(nick string, target string, text string, action bool) {
 }
 
 // Sanitize string msg from ESC and control characters.
+//
+// Returns sanitized string in out.
 func sanitizestring(msg string) (out string) {
 	for _, c := range msg {
 		if c == 127 || (c < 32 && c != '\t') {
@@ -210,10 +229,40 @@ func sanitizestring(msg string) (out string) {
 	return out
 }
 
+// Wrap words in msg at column col. When wrapping, prefix each new
+// line with nine spaces to fit under timestamp.
+//
+// Returns new wrapped message in out.
+func wrap(msg string, col int) (out string) {
+	fields := strings.Fields(msg)
+
+	var linelen int
+	for _, field := range fields {
+		linelen = linelen + len(field) + 1
+		if linelen < col {
+			// Still the same line.
+			out = out + field + " "
+		} else {
+			// This is a new line.
+			linelen = len(field) + 9
+			out = out + "\n         " + field + " "
+		}
+	}
+
+	return
+}
+
+// All messages to user should be sent through this function, which
+// sanitizes them, timestamps them and possibly word wraps and might
+// do other things depending on output type.
 func message(msg string) {
 	timestr := time.Now().Format("15:04:05")
 	msg = sanitizestring(msg)
-	fmt.Fprintf(output, "%v %s\n", timestr, msg)
+	msg = fmt.Sprintf("%v %s", timestr, msg)
+	if output.Type == O_Readline {
+		msg = wrap(msg, 72)
+	}
+	fmt.Fprintf(output.Output, "%s\n", msg)
 }
 
 func printhelp() {
@@ -370,7 +419,8 @@ func ui(subprocess bool) {
 	if subprocess {
 		// We're running as a subprocess. Just read from stdin.
 		bio = bufio.NewReader(os.Stdin)
-		output = os.Stdout
+		output.Type = O_Stdio
+		output.Output = os.Stdout
 	} else {
 		// Slightly smarter UI is used.
 		rl, err = readline.NewEx(&readline.Config{
@@ -384,7 +434,8 @@ func ui(subprocess bool) {
 
 		// Send output to readline's handler so prompt can
 		// refresh.
-		output = rl.Stdout()
+		output.Output = rl.Stdout()
+		output.Type = O_Readline
 	}
 
 	quitclient = false
