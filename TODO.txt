@@ -5,4 +5,3 @@
 - Multi-user support.
 - Multi-server support.
 - /away message.
-- Word wrap.
