@@ -114,9 +114,10 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 	var linestr string = string(line)
 	var matches int
 
-	// Find out what command this is:
+	// Find where the first space is in command string.
 	space := strings.IndexRune(linestr, ' ')
 	if space == -1 {
+		// There is no space. We're writing the first word.
 		if len(line) != 0 && linestr[0] == '/' {
 			// This is a command completion.
 			for i, cmd := range c.Commands {
@@ -166,8 +167,9 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 }
 
 func findmatch(arg string, args []string, wordpos int) (newLine [][]rune) {
+	arg = strings.ToLower(arg)
 	for _, n := range args {
-		if strings.HasPrefix(n, strings.ToLower(arg)) {
+		if strings.HasPrefix(strings.ToLower(n), arg) {
 			newLine = append(newLine, []rune(n[wordpos:]))
 		}
 	}
@@ -180,8 +182,9 @@ func findmatch(arg string, args []string, wordpos int) (newLine [][]rune) {
 //
 // Returns an array of completion lines.
 func findmap(arg string, args map[string]string, wordpos int, suffix string) (newLine [][]rune) {
+	arg = strings.ToLower(arg)
 	for _, n := range args {
-		if strings.HasPrefix(n, strings.ToLower(arg)) {
+		if strings.HasPrefix(strings.ToLower(n), arg) {
 			newLine = append(newLine, []rune(n[wordpos:]+suffix))
 		}
 	}
