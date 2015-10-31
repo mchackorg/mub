@@ -109,7 +109,7 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 			// This is a command completion.
 			for i, cmd := range c.Commands {
 				if strings.HasPrefix(cmd.Name, strings.ToLower(linestr)) {
-					newLine = append(newLine, []rune(cmd.Name[pos:]))
+					newLine = append(newLine, []rune(cmd.Name[pos:]+" "))
 					matches++
 					c.State.FoundCmd = i
 				}
@@ -119,7 +119,7 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 			}
 		} else {
 			// Nick completion.
-			newLine = findmap(linestr[space+1:], c.State.NickMap, pos)
+			newLine = findmap(linestr[space+1:], c.State.NickMap, pos, ": ")
 		}
 	} else {
 		// Argument completion.
@@ -129,29 +129,22 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		// ...and our position in the this word is:
 		wordpos := pos - len(head)
 
-		//msg := fmt.Sprintf("foundcmd: %v", c.State.FoundCmd)
-		//info(msg)
-
 		switch c.Commands[c.State.FoundCmd].Prototype.(type) {
 		case querycommand:
-			// if len(linestr) < space {
-			// 	return
-			// }
-
 			if strings.HasPrefix(linestr[space+1:], "#") {
 				// Complete a channel.
-				newLine = findmap(linestr[space+1:], c.State.Channels, wordpos)
+				newLine = findmap(linestr[space+1:], c.State.Channels, wordpos, "")
 			} else {
 				// Complete a nickname.
-				newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos)
+				newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos, "")
 			}
 
 		case whoiscommand:
-			newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos)
+			newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos, "")
 		case joincommand:
-			newLine = findmap(linestr[space+1:], c.State.Channels, wordpos)
+			newLine = findmap(linestr[space+1:], c.State.Channels, wordpos, "")
 		case partcommand:
-			newLine = findmap(linestr[space+1:], c.State.Channels, wordpos)
+			newLine = findmap(linestr[space+1:], c.State.Channels, wordpos, "")
 		}
 	}
 
@@ -162,8 +155,6 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 
 func findmatch(arg string, args []string, wordpos int) (newLine [][]rune) {
 	for _, n := range args {
-		//msg := fmt.Sprintf("comparing %v to %v", arg, n)
-		//info(msg)
 		if strings.HasPrefix(n, strings.ToLower(arg)) {
 			newLine = append(newLine, []rune(n[wordpos:]))
 		}
@@ -172,12 +163,10 @@ func findmatch(arg string, args []string, wordpos int) (newLine [][]rune) {
 	return
 }
 
-func findmap(arg string, args map[string]string, wordpos int) (newLine [][]rune) {
+func findmap(arg string, args map[string]string, wordpos int, suffix string) (newLine [][]rune) {
 	for _, n := range args {
-		//msg := fmt.Sprintf("comparing %v to %v", arg, n)
-		//info(msg)
 		if strings.HasPrefix(n, strings.ToLower(arg)) {
-			newLine = append(newLine, []rune(n[wordpos:]))
+			newLine = append(newLine, []rune(n[wordpos:]+suffix))
 		}
 	}
 
