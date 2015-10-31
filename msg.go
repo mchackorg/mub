@@ -21,6 +21,10 @@ func connecting(server string) {
 
 func nick(oldnick string, newnick string) {
 	info(oldnick + " is now known as " + newnick)
+
+	// Forget old nick and remember the new one.
+	delete(commands.State.NickMap, oldnick)
+	commands.State.NickMap[newnick] = newnick
 }
 
 func connectionerror(err error) {
@@ -47,6 +51,8 @@ func iquit() {
 func quit(nick string) {
 	line := fmt.Sprintf("%v quit IRC.", nick)
 	info(line)
+
+	delete(commands.State.NickMap, nick)
 }
 
 func notice(nick string, msg string) {
