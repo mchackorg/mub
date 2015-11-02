@@ -282,6 +282,28 @@ func printhelp() {
 
 func parsecommand(line string) {
 	fields := strings.Fields(line)
+	// Calculate line pos of where first & second argument begins -- for
+	// using as "rest of line" by relevant commands. Does not omit any
+	// initial spaces of those arguments, ie:
+	// line:/me  slaps quite
+	//          ^- firstpos
+	// line:/msg   quite   . . . it was a trout
+	//                   ^- secondpos
+	firstpos := 0
+	secondpos := 0
+	if len(fields) >= 2 {
+		firstpos = strings.Index(line, " ")
+		firstpos++
+	}
+	if len(fields) >= 3 {
+		secondpos = firstpos
+		// skipping all spaces between command and first arg
+		for ; line[secondpos] == ' '; {
+			secondpos++
+		}
+		secondpos += strings.Index(line[secondpos:], " ")
+		secondpos++
+	}
 
 	switch fields[0] {
 	case "/help":
@@ -349,9 +371,8 @@ func parsecommand(line string) {
 			return
 		}
 
-		actiontext := line[strings.Index(line, " ")+1:]
-		conn.Action(currtarget, actiontext)
-		logmsg(time.Now(), conn.Me().Nick, currtarget, actiontext, true)
+		conn.Action(currtarget, line[firstpos:])
+		logmsg(time.Now(), conn.Me().Nick, currtarget, line[firstpos:], true)
 
 	case "/names":
 		if conn == nil {
@@ -375,6 +396,19 @@ func parsecommand(line string) {
 
 		conn.Whois(fields[1])
 
+	case "/msg":
+		if conn == nil {
+			noconnection()
+			break
+		}
+
+		if len(fields) < 3 {
+			warn("Use /msg target message text")
+			return
+		}
+
+		conn.Privmsg(fields[1], line[secondpos:])
+		logmsg(time.Now(), conn.Me().Nick, fields[1], line[secondpos:], false)
 	case "/x":
 		fallthrough
 	case "/query":
