@@ -62,6 +62,10 @@ type mecommand struct {
 	Action string
 }
 
+type msgcommand struct {
+	Nick nickname "nick"
+}
+
 type namescommand struct{}
 
 // Internal state of completer.
@@ -104,10 +108,23 @@ var (
 			{"/part", partcommand{}, "Leave a channel."},
 			{"/whois", whoiscommand{}, "Show information about someone."},
 			{"/me", mecommand{}, "Show a string describing you doing something."},
+			{"/msg", msgcommand{}, "Send a message to a specific target."},
 			{"/nick", nickcommand{}, "Change your nickname."},
 			{"/names", namescommand{}, "List members on current channel."}},
 	}
 )
+
+func CompleteNickOrChan(linestr string, space int, wordpos int, channels map[string]string, nicks map[string]string) (newLine [][]rune) {
+	if strings.HasPrefix(linestr[space+1:], "#") {
+		// Complete a channel.
+		newLine = findmap(linestr[space+1:], channels, wordpos, "")
+	} else {
+		// Complete a nickname.
+		newLine = findmap(linestr[space+1:], nicks, wordpos, "")
+	}
+
+	return
+}
 
 // Completer for readline
 func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
@@ -143,15 +160,12 @@ func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
 		wordpos := pos - len(head)
 
 		switch c.Commands[c.State.FoundCmd].Prototype.(type) {
+		case msgcommand:
+			newLine = CompleteNickOrChan(linestr, space, wordpos,
+				c.State.Channels, c.State.NickMap)
 		case querycommand:
-			if strings.HasPrefix(linestr[space+1:], "#") {
-				// Complete a channel.
-				newLine = findmap(linestr[space+1:], c.State.Channels, wordpos, "")
-			} else {
-				// Complete a nickname.
-				newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos, "")
-			}
-
+			newLine = CompleteNickOrChan(linestr, space, wordpos,
+				c.State.Channels, c.State.NickMap)
 		case whoiscommand:
 			newLine = findmap(linestr[space+1:], c.State.NickMap, wordpos, "")
 		case joincommand:
@@ -298,7 +312,7 @@ func parsecommand(line string) {
 	if len(fields) >= 3 {
 		secondpos = firstpos
 		// skipping all spaces between command and first arg
-		for ; line[secondpos] == ' '; {
+		for line[secondpos] == ' ' {
 			secondpos++
 		}
 		secondpos += strings.Index(line[secondpos:], " ")
