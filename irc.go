@@ -81,8 +81,8 @@ func connect(server string, nickname string, usetls bool) bool {
 	cfg.SSLConfig = &tlsconfig
 	cfg.Server = server
 	cfg.NewNick = func(n string) string { return n + "^" }
-	cfg.Me.Ident = "mub"
-	cfg.Me.Name = "Real Name" // Real Name.
+	cfg.Me.Ident = "mub"    // FIXME Settable?
+	cfg.Me.Name = "Unknown" // FIXME Real Name. Settable as variable? Config file?
 
 	conn = irc.Client(cfg)
 
