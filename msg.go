@@ -7,6 +7,14 @@ import (
 	"time"
 )
 
+func away() {
+	info("You are now away.")
+}
+
+func back() {
+	info("Welcome back.")
+}
+
 func notarget() {
 	warn("Join a channel first.")
 }

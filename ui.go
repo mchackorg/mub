@@ -24,6 +24,9 @@ type nickorchan string
 
 type nocommand struct{}
 
+type awaycommand struct {
+}
+
 type helpcommand struct{}
 
 type tlsconnectcommand struct {
@@ -98,6 +101,7 @@ var (
 	commands = Commands{
 		Commands: []command{
 			{"", nocommand{}, "No command given."},
+			{"/away", awaycommand{}, "Toggle presence."},
 			{"/help", helpcommand{}, "Give this help"},
 			{"/tlsconnect", tlsconnectcommand{}, "Connect to IRC server using TLS."},
 			{"/connect", connectcommand{}, "Connect to IRC server."},
@@ -320,6 +324,19 @@ func parsecommand(line string) {
 	}
 
 	switch fields[0] {
+	case "/away":
+		if conn == nil {
+			noconnection()
+			break
+		}
+		if len(fields) >= 2 {
+			conn.Away(line[firstpos:])
+			away()
+		} else {
+			conn.Away()
+			back()
+		}
+
 	case "/help":
 		printhelp()
 
