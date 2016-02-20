@@ -1,4 +1,4 @@
-# mub - a Small IRC client
+# mub - a minimalist cross-platform IRC client
 
 This is a small, bare-bones IRC client.
 
@@ -16,3 +16,11 @@ or /connect for unencrypted connections.
 
 The server clause in the configuration file limits what servers are
 allowed to connect to.
+
+## Development
+
+You need to `go get` these before go build:
+
+github.com/fluffle/goirc/client
+gopkg.in/yaml.v2
+github.com/chzyer/readline
