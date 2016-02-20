@@ -227,9 +227,9 @@ func showmsg(nick string, target string, text string, action bool) {
 	var str string
 
 	if action {
-		str = fmt.Sprintf("* %v→%v: %v %v", nick, target, nick, text)
+		str = fmt.Sprintf("%v [%v %v]", target, nick, text)
 	} else {
-		str = fmt.Sprintf("<%v→%v> %v", nick, target, text)
+		str = fmt.Sprintf("%v <%v> %v", target, nick, text)
 	}
 
 	message(str)

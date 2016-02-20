@@ -48,13 +48,13 @@ func parseconfig(filename string) (conf *Config, err error) {
 func logmsg(time time.Time, nick string, target string, text string, action bool) {
 	line := time.UTC().Format("2006-01-02 15:04:05")
 	if target != "" {
-		line += " " + target
+		line += " " + target + " "
 	}
 	text = strings.TrimRight(text, "\r\n")
 	if action {
-		line += fmt.Sprintf(" * %s %s\n", nick, text)
+		line += fmt.Sprintf("[%v %v]\n", nick, text)
 	} else {
-		line += fmt.Sprintf(" <%s> %s\n", nick, text)
+		line += fmt.Sprintf("<%v> %v\n", nick, text)
 	}
 
 	if file != nil {
