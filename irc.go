@@ -96,14 +96,15 @@ func connect(server string, nickname string, usetls bool) bool {
 
 	conn.HandleFunc("privmsg",
 		func(conn *irc.Conn, line *irc.Line) {
-			msg(line.Time, line.Nick, line.Target(), line.Text(), false)
-			logmsg(line.Time, line.Nick, line.Target(), line.Text(), false)
+
+			msg(line.Time, line.Nick, line.Args[0], line.Text(), false)
+			logmsg(line.Time, line.Nick, line.Args[0], line.Text(), false)
 		})
 
 	conn.HandleFunc("action",
 		func(conn *irc.Conn, line *irc.Line) {
-			msg(line.Time, line.Nick, line.Target(), line.Text(), true)
-			logmsg(line.Time, line.Nick, line.Target(), line.Text(), true)
+			msg(line.Time, line.Nick, line.Args[0], line.Text(), true)
+			logmsg(line.Time, line.Nick, line.Args[0], line.Text(), true)
 		})
 
 	conn.HandleFunc("join",
