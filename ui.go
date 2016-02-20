@@ -514,7 +514,7 @@ func ui(subprocess bool) {
 				log.Fatal("Couldn't get input.\n")
 			}
 		} else {
-			rl.SetPrompt("\033[33m<" + currtarget + "> \033[0m")
+			rl.SetPrompt("\033[33m" + currtarget + "> \033[0m")
 			line, err = rl.Readline()
 			if err != nil {
 				break
