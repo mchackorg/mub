@@ -227,7 +227,7 @@ func showmsg(nick string, target string, text string, action bool) {
 	var str string
 
 	if action {
-		str = fmt.Sprintf("* On %v: %v %v", target, nick, text)
+		str = fmt.Sprintf("* %v→%v: %v %v", nick, target, nick, text)
 	} else {
 		str = fmt.Sprintf("<%v→%v> %v", nick, target, text)
 	}
@@ -514,7 +514,7 @@ func ui(subprocess bool) {
 				log.Fatal("Couldn't get input.\n")
 			}
 		} else {
-			rl.SetPrompt("\033[33m[" + currtarget + "] \033[0m")
+			rl.SetPrompt("\033[33m<" + currtarget + "> \033[0m")
 			line, err = rl.Readline()
 			if err != nil {
 				break
