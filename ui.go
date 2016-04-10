@@ -71,25 +71,27 @@ type msgcommand struct {
 
 type namescommand struct{}
 
-// Internal state of completer.
-type CommandState struct {
+// commandState is the internal state of completer.
+type commandState struct {
 	FoundCmd int
 	Channels map[string]string
 	NickMap  map[string]string
 }
 
+// commands keeps a list of commands and the internal state of the
+// completer.
 type Commands struct {
 	Commands []command
-	State    *CommandState
+	State    *commandState
 }
 
 // Constants for output type
 const (
-	O_Stdio int = iota
-	O_Readline
+	Ostdio int = iota
+	Oreadline
 )
 
-// Type of output and associated writer.
+// Output is the type of output and associated writer.
 type Output struct {
 	Type   int // From constants above.
 	Output io.Writer
@@ -118,6 +120,8 @@ var (
 	}
 )
 
+// CompleteNickOrChan completes either a channel name if our current
+// position begins with an "#" or, if not, a nickname of a user.
 func CompleteNickOrChan(linestr string, space int, wordpos int, channels map[string]string, nicks map[string]string) (newLine [][]rune) {
 	if strings.HasPrefix(linestr[space+1:], "#") {
 		// Complete a channel.
@@ -130,9 +134,9 @@ func CompleteNickOrChan(linestr string, space int, wordpos int, channels map[str
 	return
 }
 
-// Completer for readline
+// Do is a completer for readline.
 func (c Commands) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	var linestr string = string(line)
+	var linestr = string(line)
 	var matches int
 
 	// Find where the first space is in command string.
@@ -280,7 +284,7 @@ func message(msg string) {
 	timestr := time.Now().Format("15:04:05")
 	msg = sanitizestring(msg)
 	msg = fmt.Sprintf("%v %s", timestr, msg)
-	if output.Type == O_Readline {
+	if output.Type == Oreadline {
 		msg = wrap(msg, 72)
 	}
 	fmt.Fprintf(output.Output, "%s\n", msg)
@@ -473,7 +477,7 @@ func parsecommand(line string) {
 }
 
 func ui(subprocess bool) {
-	var state CommandState
+	var state commandState
 	var rl *readline.Instance
 	var line string
 	var err error
@@ -487,7 +491,7 @@ func ui(subprocess bool) {
 	if subprocess {
 		// We're running as a subprocess. Just read from stdin.
 		bio = bufio.NewReader(os.Stdin)
-		output.Type = O_Stdio
+		output.Type = Ostdio
 		output.Output = os.Stdout
 	} else {
 		// Slightly smarter UI is used.
@@ -503,7 +507,7 @@ func ui(subprocess bool) {
 		// Send output to readline's handler so prompt can
 		// refresh.
 		output.Output = rl.Stdout()
-		output.Type = O_Readline
+		output.Type = Oreadline
 	}
 
 	quitclient = false
