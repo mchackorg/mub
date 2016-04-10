@@ -76,6 +76,8 @@ func connect(server string, nickname string, usetls bool) bool {
 	}
 
 	cfg := irc.NewConfig(nickname)
+	// Don't recover any crashes.
+	cfg.Recover = func(c *irc.Conn, l *irc.Line) {}
 	cfg.SSL = usetls
 	tlsconfig.InsecureSkipVerify = true
 	cfg.SSLConfig = &tlsconfig
