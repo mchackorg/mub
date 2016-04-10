@@ -14,6 +14,7 @@ import (
 	"time"
 )
 
+// IRC client configuration.
 type Config struct {
 	Server  string
 	LogFile string
