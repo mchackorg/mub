@@ -3,13 +3,14 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/chzyer/readline"
 	"io"
 	"log"
 	"os"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/chzyer/readline"
 )
 
 type command struct {
@@ -71,6 +72,8 @@ type msgcommand struct {
 
 type namescommand struct{}
 
+type statuscommand struct{}
+
 // commandState is the internal state of completer.
 type commandState struct {
 	FoundCmd int
@@ -100,6 +103,8 @@ type Output struct {
 var (
 	output Output // All output should go here, not to stdout.
 
+	statusEvents bool = true // Show joined, parted, quit, ... messages
+
 	commands = Commands{
 		Commands: []command{
 			{"", nocommand{}, "No command given."},
@@ -116,7 +121,8 @@ var (
 			{"/me", mecommand{}, "Show a string describing you doing something."},
 			{"/msg", msgcommand{}, "Send a message to a specific target."},
 			{"/nick", nickcommand{}, "Change your nickname."},
-			{"/names", namescommand{}, "List members on current channel."}},
+			{"/names", namescommand{}, "List members on current channel."},
+			{"/status", statuscommand{}, "Toggle status join, quit messages."}},
 	}
 )
 
@@ -417,6 +423,15 @@ func parsecommand(line string) {
 
 		namescmd := fmt.Sprintf("NAMES %v", currtarget)
 		conn.Raw(namescmd)
+
+	case "/status":
+		if statusEvents {
+			statusEvents = false
+			message("Not showing quits, joins, et cetera.")
+		} else {
+			statusEvents = true
+			message("Showing quits, joins, et cetera.")
+		}
 
 	case "/whois":
 		if conn == nil {
