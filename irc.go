@@ -21,6 +21,7 @@ type Config struct {
 	Nick            string
 	LogFile         string
 	TLS             bool
+	Pass            string
 	BlockedCommands map[string]string
 }
 
@@ -34,12 +35,12 @@ var (
 
 // Parse the configuration file. Returns the configuration.
 func parseconfig(filename string) (conf *Config, err error) {
+	conf = new(Config)
+
 	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return
 	}
-
-	conf = new(Config)
 
 	if err = yaml.Unmarshal(contents, &conf); err != nil {
 		return
@@ -175,7 +176,7 @@ func main() {
 	rl, bio := initUI(*subprocess)
 
 	if conf != nil && conf.Server != "" && conf.Nick != "" {
-		connect(conf.Server, conf.Nick, conf.TLS)
+		connect(conf.Server, conf.Nick, conf.Pass, conf.TLS)
 	}
 
 	ui(*subprocess, rl, bio)
