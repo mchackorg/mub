@@ -1,6 +1,8 @@
 ---
 server: irc.freenode.org
 nick: testnick
+ident: testnick
+realname: Test Nick
 tls: true
 pass: secret
 #logfile: irclog.txt
