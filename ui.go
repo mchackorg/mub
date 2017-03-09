@@ -275,8 +275,8 @@ func wrap(msg string, col int) (out string) {
 			out = out + field + " "
 		} else {
 			// This is a new line.
-			linelen = len(field) + 9
-			out = out + "\n         " + field + " "
+			linelen = len(field) + 7
+			out = out + "\n       " + field + " "
 		}
 	}
 
@@ -290,9 +290,9 @@ func message(msg string) {
 	timestr := time.Now().Format("15:04")
 	msg = sanitizestring(msg)
 	msg = fmt.Sprintf("%v %s", timestr, msg)
-	if output.Type == Oreadline {
-		msg = wrap(msg, 72)
-	}
+
+	msg = wrap(msg, 72)
+
 	fmt.Fprintf(output.Output, "%s\n", msg)
 }
 
@@ -331,6 +331,12 @@ func parsecommand(line string) {
 		}
 		secondpos += strings.Index(line[secondpos:], " ")
 		secondpos++
+	}
+
+	// Check if this command is allowed.
+	if _, val := conf.BlockedCommands[fields[0]]; val {
+		info("Command blocked by configuration.")
+		return
 	}
 
 	switch fields[0] {
@@ -506,6 +512,11 @@ func parsecommand(line string) {
 func initUI(subprocess bool) (rl *readline.Instance, bio *bufio.Reader) {
 	var err error
 
+	// commands.State = &state
+	commands.State = new(commandState)
+	commands.State.NickMap = make(map[string]string)
+	commands.State.Channels = make(map[string]string)
+
 	if subprocess {
 		// We're running as a subprocess. Just read from stdin.
 		bio = bufio.NewReader(os.Stdin)
@@ -513,12 +524,6 @@ func initUI(subprocess bool) (rl *readline.Instance, bio *bufio.Reader) {
 		output.Output = os.Stdout
 	} else {
 		// Internal state for command completer.
-
-		var state commandState
-
-		commands.State = &state
-		commands.State.NickMap = make(map[string]string)
-		commands.State.Channels = make(map[string]string)
 
 		// Slightly smarter UI is used.
 		rl, err = readline.NewEx(&readline.Config{
@@ -543,7 +548,9 @@ func ui(subprocess bool, rl *readline.Instance, bio *bufio.Reader) {
 	var line string
 	var err error
 
-	defer rl.Close()
+	if !subprocess {
+		defer rl.Close()
+	}
 
 	quitclient = false
 	for !quitclient {

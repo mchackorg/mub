@@ -17,10 +17,11 @@ import (
 
 // Config is the IRC client configuration.
 type Config struct {
-	Server  string
-	Nick    string
-	LogFile string
-	TLS     bool
+	Server          string
+	Nick            string
+	LogFile         string
+	TLS             bool
+	BlockedCommands map[string]string
 }
 
 var (
