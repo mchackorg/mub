@@ -6,17 +6,19 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	irc "github.com/fluffle/goirc/client"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"os"
 	"strings"
 	"time"
+
+	irc "github.com/fluffle/goirc/client"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // Config is the IRC client configuration.
 type Config struct {
 	Server  string
+	Nick    string
 	LogFile string
 	TLS     bool
 }
@@ -69,12 +71,6 @@ func logmsg(time time.Time, nick string, target string, text string, action bool
 
 func connect(server string, nickname string, pass string, usetls bool) bool {
 	var tlsconfig tls.Config
-
-	// Check if we're allowed to connect to this host.
-	if conf != nil && conf.Server != "" && server != conf.Server {
-		errormsg("Not allowed to connect to " + server)
-		return false
-	}
 
 	cfg := irc.NewConfig(nickname)
 	// Don't recover any crashes.
@@ -146,7 +142,7 @@ func connect(server string, nickname string, pass string, usetls bool) bool {
 			whois(line.Args[1], line.Args[5], line.Args[2], line.Args[3])
 		})
 
-	connecting(server)
+	connecting(server, usetls)
 
 	if err := conn.Connect(); err != nil {
 		connectionerror(err)
@@ -175,7 +171,13 @@ func main() {
 		}
 	}
 
-	ui(*subprocess)
+	rl, bio := initUI(*subprocess)
+
+	if conf != nil && conf.Server != "" && conf.Nick != "" {
+		connect(conf.Server, conf.Nick, conf.TLS)
+	}
+
+	ui(*subprocess, rl, bio)
 
 	disconnected()
 }

@@ -23,8 +23,15 @@ func noconnection() {
 	warn("Not connected to a server.")
 }
 
-func connecting(server string) {
-	info("Connecting to " + server + "...")
+func connecting(server string, usetls bool) {
+	line := fmt.Sprintf("Connecting to %v", server)
+	if usetls {
+		line = line + " using TLS..."
+	} else {
+		line = line + " ..."
+	}
+
+	info(line)
 }
 
 func nick(oldnick string, newnick string) {

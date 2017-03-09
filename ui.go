@@ -287,7 +287,7 @@ func wrap(msg string, col int) (out string) {
 // sanitizes them, timestamps them and possibly word wraps and might
 // do other things depending on output type.
 func message(msg string) {
-	timestr := time.Now().Format("15:04:05")
+	timestr := time.Now().Format("15:04")
 	msg = sanitizestring(msg)
 	msg = fmt.Sprintf("%v %s", timestr, msg)
 	if output.Type == Oreadline {
@@ -503,17 +503,8 @@ func parsecommand(line string) {
 	}
 }
 
-func ui(subprocess bool) {
-	var state commandState
-	var rl *readline.Instance
-	var line string
+func initUI(subprocess bool) (rl *readline.Instance, bio *bufio.Reader) {
 	var err error
-	var bio *bufio.Reader
-
-	// Internal state for command completer.
-	commands.State = &state
-	commands.State.NickMap = make(map[string]string)
-	commands.State.Channels = make(map[string]string)
 
 	if subprocess {
 		// We're running as a subprocess. Just read from stdin.
@@ -521,6 +512,14 @@ func ui(subprocess bool) {
 		output.Type = Ostdio
 		output.Output = os.Stdout
 	} else {
+		// Internal state for command completer.
+
+		var state commandState
+
+		commands.State = &state
+		commands.State.NickMap = make(map[string]string)
+		commands.State.Channels = make(map[string]string)
+
 		// Slightly smarter UI is used.
 		rl, err = readline.NewEx(&readline.Config{
 			HistoryFile:  "/tmp/mub.tmp",
@@ -529,13 +528,22 @@ func ui(subprocess bool) {
 		if err != nil {
 			panic(err)
 		}
-		defer rl.Close()
 
 		// Send output to readline's handler so prompt can
 		// refresh.
 		output.Output = rl.Stdout()
 		output.Type = Oreadline
 	}
+
+	return
+}
+
+func ui(subprocess bool, rl *readline.Instance, bio *bufio.Reader) {
+
+	var line string
+	var err error
+
+	defer rl.Close()
 
 	quitclient = false
 	for !quitclient {
@@ -552,7 +560,6 @@ func ui(subprocess bool) {
 			}
 		}
 
-		line = strings.TrimSpace(line)
 		if line != "" && line != "\n" && line != "\r\n" {
 			if line[0] == '/' {
 				// A command

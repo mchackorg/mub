@@ -1,3 +1,5 @@
 ---
-#server: irc.freenode.org
+server: irc.freenode.org
+nick: mchack
+tls: true
 #logfile: irclog.txt
