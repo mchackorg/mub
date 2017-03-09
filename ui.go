@@ -351,18 +351,30 @@ func parsecommand(line string) {
 		printhelp()
 
 	case "/tlsconnect":
-		if len(fields) != 3 {
-			warn("Use /connect server:port nick")
+		var pass string
+
+		if len(fields) < 3 {
+			warn("Use /connect server:port nick [server-pass]")
 			return
 		}
-		connect(fields[1], fields[2], true)
+		if len(fields) == 4 {
+			pass = fields[3]
+		}
+
+		connect(fields[1], fields[2], pass, true)
 
 	case "/connect":
-		if len(fields) != 3 {
-			warn("Use /connect server:port nick")
+		var pass string
+
+		if len(fields) < 3 {
+			warn("Use /connect server:port nick [server-pass]")
 			return
 		}
-		connect(fields[1], fields[2], false)
+		if len(fields) == 4 {
+			pass = fields[3]
+		}
+
+		connect(fields[1], fields[2], pass, false)
 
 	case "/nick":
 		if conn == nil {

@@ -67,7 +67,7 @@ func logmsg(time time.Time, nick string, target string, text string, action bool
 	}
 }
 
-func connect(server string, nickname string, usetls bool) bool {
+func connect(server string, nickname string, pass string, usetls bool) bool {
 	var tlsconfig tls.Config
 
 	// Check if we're allowed to connect to this host.
@@ -86,6 +86,7 @@ func connect(server string, nickname string, usetls bool) bool {
 	cfg.NewNick = func(n string) string { return n + "^" }
 	cfg.Me.Ident = "mub"    // FIXME Settable?
 	cfg.Me.Name = "Unknown" // FIXME Real Name. Settable as variable? Config file?
+	cfg.Pass = pass
 
 	conn = irc.Client(cfg)
 
