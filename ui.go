@@ -526,7 +526,6 @@ func initUI(subprocess bool) (rl *readline.Instance, bio *bufio.Reader) {
 
 		// Slightly smarter UI is used.
 		rl, err = readline.NewEx(&readline.Config{
-			HistoryFile:  "/tmp/mub.tmp",
 			AutoComplete: commands,
 		})
 		if err != nil {

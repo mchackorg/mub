@@ -20,6 +20,8 @@ type Config struct {
 	Server          string
 	Nick            string
 	LogFile         string
+	Ident           string
+	RealName        string
 	TLS             bool
 	Pass            string
 	BlockedCommands map[string]string
@@ -37,6 +39,8 @@ var (
 func parseconfig(filename string) (conf *Config, err error) {
 	conf = new(Config)
 
+	conf.Ident = "mub"
+	conf.RealName = "unknown"
 	contents, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return
@@ -82,8 +86,8 @@ func connect(server string, nickname string, pass string, usetls bool) bool {
 	cfg.SSLConfig = &tlsconfig
 	cfg.Server = server
 	cfg.NewNick = func(n string) string { return n + "^" }
-	cfg.Me.Ident = "mub"    // FIXME Settable?
-	cfg.Me.Name = "Unknown" // FIXME Real Name. Settable as variable? Config file?
+	cfg.Me.Ident = conf.Ident
+	cfg.Me.Name = conf.RealName
 	cfg.Pass = pass
 
 	conn = irc.Client(cfg)
