@@ -512,7 +512,6 @@ func parsecommand(line string) {
 func initUI(subprocess bool) (rl *readline.Instance, bio *bufio.Reader) {
 	var err error
 
-	// commands.State = &state
 	commands.State = new(commandState)
 	commands.State.NickMap = make(map[string]string)
 	commands.State.Channels = make(map[string]string)
