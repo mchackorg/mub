@@ -167,12 +167,21 @@ func connect(server string, nickname string, pass string, usetls bool) bool {
 	return true
 }
 
+func greeting() {
+	fmt.Printf("Welcome to IRC!\n")
+	fmt.Printf("Type /help to list available commands.\n")
+	fmt.Printf("Use /tlsconnect server nick [password] to connect to an IRC server.\n")
+	fmt.Printf("Then use /join #channelname to join the chat rooms.\n")
+}
+
 func main() {
 	var err error
 	var configfile = flag.String("config", "mub.yaml", "Path to configuration file")
 	var subprocess = flag.Bool("sub", false, "Run as subprocess without prompt and readline.")
 
 	flag.Parse()
+
+	greeting()
 
 	conf, err = parseconfig(*configfile)
 	if err != nil {
