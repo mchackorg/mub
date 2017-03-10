@@ -1,5 +1,7 @@
 ---
 server: irc.freenode.org
+allowservers:
+  irc.freenode.org: allowed
 nick: testnick
 ident: testnick
 realname: Test Nick
