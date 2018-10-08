@@ -21,6 +21,6 @@ allowed to connect to.
 
 You need to `go get` these before go build:
 
-github.com/fluffle/goirc/client
-gopkg.in/yaml.v2
-github.com/chzyer/readline
+- github.com/fluffle/goirc/client
+- gopkg.in/yaml.v2
+- github.com/chzyer/readline
