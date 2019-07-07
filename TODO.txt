@@ -1,5 +1,0 @@
-- Verifying TLS certificate with fingerprints.
-- Specify commands to run at start.
-- websockets support.
-- Multi-user support.
-- Multi-server support.
