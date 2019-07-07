@@ -14,5 +14,7 @@ To connect to a server, use
 
 or /connect for unencrypted connections.
 
-The server clause in the configuration file limits what servers are
-allowed to connect to.
+## Configuration file
+
+There is a sample configuration file with comments in
+`mub.yaml.sample`.

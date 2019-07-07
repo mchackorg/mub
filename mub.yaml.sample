@@ -1,10 +1,22 @@
 ---
+
+# Automatically connect to this server
 server: irc.freenode.org
+
+# Allow user to use /connect and /tlsconnect only to these servers
 allowservers:
   irc.freenode.org: allowed
+
+# The default nickname, ident and real name of the user
 nick: testnick
 ident: testnick
 realname: Test Nick
+
+# Use TLS when automatically connecting
 tls: true
+
+# Use this server password
 pass: secret
+
+# Log everything to this file
 #logfile: irclog.txt
